@@ -2,11 +2,12 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { EntityCombobox } from '@/components/entity-combobox'
+import { ListCard } from '@/components/list-card'
 import { PageHeader } from '@/components/page-header'
 import { Field, SearchBar } from '@/components/search-bar'
 import { SearchInput } from '@/components/search-input'
-import { EmptyRow } from '@/components/table-helpers'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Code, ColHead, EmptyRow } from '@/components/table-helpers'
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table'
 import { none, useQuery } from '@/hooks/use-query'
 import { listStock } from '@/lib/actions/inventory'
 import { listPublishers } from '@/lib/actions/master'
@@ -40,38 +41,40 @@ export default function StockStatusPage() {
         }}
         onSearch={stock.reload}
       >
-        <Field label="출판사">
+        <Field label="출판사 *">
           <EntityCombobox label="출판사" options={pubOptions(pubs.data)} value={pubId} onChange={setPubId} />
         </Field>
-        <Field label="도서">
+        <Field label="도서" className="flex-1">
           <SearchInput value={keyword} onChange={setKeyword} suggestions={stock.data.map((r) => r.name)} placeholder="도서명 또는 코드" />
         </Field>
       </SearchBar>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>도서코드</TableHead>
-            <TableHead>도서명</TableHead>
-            <TableHead className="text-right">입고</TableHead>
-            <TableHead className="text-right">출고</TableHead>
-            <TableHead className="text-right">반품</TableHead>
-            <TableHead className="text-right">현재고</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {rows.map((r) => (
-            <TableRow key={r.book_id}>
-              <TableCell>{r.code}</TableCell>
-              <TableCell>{r.name}</TableCell>
-              <TableCell className="text-right">{won(r.received)}</TableCell>
-              <TableCell className="text-right">{won(r.shipped)}</TableCell>
-              <TableCell className="text-right">{won(r.returned)}</TableCell>
-              <TableCell className={cn('text-right font-semibold', r.stock < 0 && 'text-destructive')}>{won(r.stock)}</TableCell>
+      <ListCard title="도서별 재고" count={`${rows.length}종`}>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <ColHead>도서코드</ColHead>
+              <ColHead>도서명</ColHead>
+              <ColHead>입고</ColHead>
+              <ColHead>출고</ColHead>
+              <ColHead>반품</ColHead>
+              <ColHead>현재고</ColHead>
             </TableRow>
-          ))}
-          <EmptyRow show={rows.length === 0} cols={6} />
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {rows.map((r) => (
+              <TableRow key={r.book_id}>
+                <TableCell><Code>{r.code}</Code></TableCell>
+                <TableCell className="font-semibold">{r.name}</TableCell>
+                <TableCell className="text-right">{won(r.received)}</TableCell>
+                <TableCell className="text-right">{won(r.shipped)}</TableCell>
+                <TableCell className="text-right">{won(r.returned)}</TableCell>
+                <TableCell className={cn('text-right font-semibold', r.stock < 0 && 'text-destructive')}>{won(r.stock)}</TableCell>
+              </TableRow>
+            ))}
+            <EmptyRow show={rows.length === 0} cols={6} />
+          </TableBody>
+        </Table>
+      </ListCard>
     </>
   )
 }

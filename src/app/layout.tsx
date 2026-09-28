@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 import { AppSidebar } from '@/components/app-sidebar'
+import { HelpButton } from '@/components/help-button'
+import { TopBar } from '@/components/top-bar'
 import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 
@@ -14,8 +16,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="antialiased">
         <div className="flex min-h-screen">
           <AppSidebar />
-          <main className="flex-1 space-y-4 p-6 print:p-0">{children}</main>
+          <div className="flex min-w-0 flex-1 flex-col">
+            <TopBar />
+            <main className="flex-1 space-y-6 px-7 pt-8 pb-10 print:p-0">{children}</main>
+          </div>
         </div>
+        <HelpButton />
         <Toaster richColors position="top-center" />
       </body>
     </html>

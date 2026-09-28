@@ -1,72 +1,60 @@
 'use client'
 
+import { BookOpen } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { NAV } from '@/components/nav'
+import { today } from '@/lib/format'
 import { hasUnsaved } from '@/lib/unsaved'
 import { cn } from '@/lib/utils'
-
-// 관리 메뉴는 [도서·서점·출판사] / [입고·반품] 두 묶음 사이에 희미한 구분선
-const MENU = [
-  {
-    title: '관리',
-    groups: [
-      [
-        { href: '/books', label: '도서 관리' },
-        { href: '/bookstores', label: '서점 관리' },
-        { href: '/publishers', label: '출판사 관리' },
-      ],
-      [
-        { href: '/receipts', label: '입고 관리' },
-        { href: '/returns', label: '반품 관리' },
-      ],
-    ],
-  },
-  {
-    title: '현황',
-    groups: [[
-      { href: '/status/shipments', label: '출고 현황' },
-      { href: '/status/stock', label: '재고 현황' },
-    ]],
-  },
-  {
-    title: '명세서',
-    groups: [[
-      { href: '/statements/entry', label: '출고 입력' },
-      { href: '/statements/print', label: '명세서 출력' },
-      { href: '/statements/ledger', label: '재고 원장' },
-      { href: '/statements/dispatch', label: '출고증' },
-    ]],
-  },
-]
 
 export function AppSidebar() {
   const pathname = usePathname()
   return (
-    <aside className="w-56 shrink-0 border-r bg-muted/40 p-4 print:hidden">
-      <div className="mb-6 px-2 text-lg font-bold">Book OMS</div>
-      <nav className="space-y-6">
-        {MENU.map((m) => (
-          <div key={m.title}>
-            <div className="mb-2 px-2 text-xs font-semibold text-muted-foreground">{m.title}</div>
+    <aside className="sticky top-0 flex h-screen w-72 shrink-0 flex-col bg-sidebar text-sidebar-foreground print:hidden">
+      <div className="flex items-center gap-3.5 border-b border-sidebar-border px-5 py-6">
+        <div className="flex size-11 items-center justify-center rounded-xl bg-sidebar-primary text-white">
+          <BookOpen className="size-5" />
+        </div>
+        <div>
+          <div className="text-lg leading-tight font-bold text-white">도서 재고관리</div>
+          <div className="mt-1 font-mono text-xs text-slate-400" suppressHydrationWarning>{today()}</div>
+        </div>
+      </div>
+      <nav className="flex-1 overflow-y-auto px-2 pb-4">
+        {NAV.map((m, si) => (
+          <div key={m.title} className={cn('pt-5', si > 0 && 'mt-2')}>
+            <div className="mb-2 px-3.5 text-[13px] font-medium text-slate-500">{m.title}</div>
             {m.groups.map((items, gi) => (
-              <div key={gi} className={cn(gi > 0 && 'mt-2 border-t border-border/50 pt-2')}>
-                {items.map((it) => (
-                  <Link
-                    key={it.href}
-                    href={it.href}
-                    onClick={(e) => {
-                      if (hasUnsaved() && !confirm('저장하지 않은 변경 내용이 있습니다. 버리고 이동할까요?')) e.preventDefault()
-                    }}
-                    className={cn('block rounded-md px-2 py-1.5 text-sm hover:bg-accent', pathname === it.href && 'bg-accent font-medium')}
-                  >
-                    {it.label}
-                  </Link>
-                ))}
+              <div key={gi} className="space-y-1">
+                {gi > 0 && <div className="mx-3.5 my-3 border-t border-sidebar-border" />}
+                {items.map((it) => {
+                  const Icon = it.icon
+                  const active = pathname === it.href
+                  return (
+                    <Link
+                      key={it.href}
+                      href={it.href}
+                      aria-current={active ? 'page' : undefined}
+                      onClick={(e) => {
+                        if (hasUnsaved() && !confirm('저장하지 않은 변경 내용이 있습니다. 버리고 이동할까요?')) e.preventDefault()
+                      }}
+                      className={cn(
+                        'flex h-[50px] items-center gap-3 rounded-lg px-3.5 text-lg font-semibold transition-colors',
+                        active ? 'bg-sidebar-primary text-white' : 'hover:bg-sidebar-accent hover:text-white',
+                      )}
+                    >
+                      <Icon className="size-5 shrink-0" strokeWidth={1.8} />
+                      {it.label}
+                    </Link>
+                  )
+                })}
               </div>
             ))}
           </div>
         ))}
       </nav>
+      <div className="border-t border-sidebar-border px-5 py-3 font-mono text-xs text-slate-500">v1.0.0</div>
     </aside>
   )
 }

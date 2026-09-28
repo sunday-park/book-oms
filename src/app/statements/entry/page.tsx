@@ -4,9 +4,11 @@ import { Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { EntityCombobox } from '@/components/entity-combobox'
+import { ListCard } from '@/components/list-card'
 import { PageHeader } from '@/components/page-header'
 import { Notice } from '@/components/print-sheet'
 import { Field, SearchBar } from '@/components/search-bar'
+import { Code, ColHead } from '@/components/table-helpers'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -155,30 +157,59 @@ export default function ShipmentEntryPage() {
         <Field label="날짜">
           <Input type="date" className="w-40" value={date} onChange={(e) => guard(() => setDate(e.target.value))} />
         </Field>
-        <Field label="출판사">
+        <Field label="출판사 *">
           <EntityCombobox label="출판사" options={pubOptions(pubs.data)} value={pubId} onChange={(v) => guard(() => setPubId(v))} />
         </Field>
-        <Field label="서점">
+        <Field label="서점 *">
           <EntityCombobox label="서점" options={storeOptions(stores.data)} value={storeId} onChange={(v) => guard(() => setStoreId(v))} />
         </Field>
       </SearchBar>
       {!pubId || !storeId ? (
         <Notice>출판사와 서점을 선택하세요.</Notice>
       ) : (
-        <>
+        <ListCard
+          title="출고 명세"
+          dense
+          count={`${rows.length}행`}
+          footer={
+            <div className="space-y-3">
+              {rows.some((r) => r.printed) && (
+                <p className="text-xs text-muted-foreground">인쇄된 행은 수정·삭제할 수 없습니다. 추가분은 [+ 행 추가]로 입력하세요.</p>
+              )}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  className="h-10 px-4 text-[15px]"
+                  onClick={() => {
+                    setDirty(true)
+                    setRows((rs) => [...rs, newRow()])
+                  }}
+                >
+                  + 행 추가
+                </Button>
+                <div className="ml-auto flex items-center gap-2">
+                  {error && <p className="text-sm text-destructive">{error}</p>}
+                  <Button variant="outline" className="h-10 px-4 text-[15px]" onClick={() => guard(load)}>취소</Button>
+                  <Button variant="outline" className="h-10 px-4 text-[15px] text-destructive" onClick={remove}>삭제</Button>
+                  <Button className="h-10 px-5 text-[15px] font-semibold" onClick={save}>저장</Button>
+                </div>
+              </div>
+            </div>
+          }
+        >
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-10">No</TableHead>
-                <TableHead>도서코드</TableHead>
-                <TableHead>도서명</TableHead>
-                <TableHead className="text-right">정가</TableHead>
-                <TableHead className="w-24">출고율(%)</TableHead>
-                <TableHead className="text-right">단가</TableHead>
-                <TableHead className="text-right">금액</TableHead>
-                <TableHead className="w-28">구분</TableHead>
-                <TableHead className="w-24">부수</TableHead>
-                <TableHead className="w-12" />
+                <ColHead className="w-10">No</ColHead>
+                <ColHead>도서코드</ColHead>
+                <ColHead>도서명</ColHead>
+                <ColHead>정가</ColHead>
+                <ColHead className="w-24">출고율(%)</ColHead>
+                <ColHead>단가</ColHead>
+                <ColHead>금액</ColHead>
+                <ColHead className="w-28">구분</ColHead>
+                <ColHead className="w-24">부수</ColHead>
+                <TableHead className="w-14" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -186,18 +217,18 @@ export default function ShipmentEntryPage() {
                 <TableRow key={r.key}>
                   <TableCell>{i + 1}</TableCell>
                   <TableCell>
-                    {r.book_id ? bookMap.get(r.book_id)?.code : ''}
+                    <Code>{r.book_id ? bookMap.get(r.book_id)?.code : ''}</Code>
                     {r.printed && <Badge variant="secondary" className="ml-2">인쇄됨</Badge>}
                   </TableCell>
                   <TableCell>
                     <EntityCombobox label={`${i + 1}행 도서`} placeholder="도서 선택" options={bookOptions(books.data)} value={r.book_id} onChange={(v) => update(r.key, { book_id: v })} disabled={r.printed} />
                   </TableCell>
-                  <TableCell className="text-right">{won(calc[i].listPrice)}</TableCell>
+                  <TableCell className="text-right">{won(calc[i].listPrice)}원</TableCell>
                   <TableCell>
                     <Input aria-label={`${i + 1}행 출고율`} type="number" min={0} max={100} step="0.1" value={r.rate} onChange={(e) => update(r.key, { rate: Number(e.target.value) })} disabled={r.printed} />
                   </TableCell>
-                  <TableCell className="text-right">{won(calc[i].unit)}</TableCell>
-                  <TableCell className="text-right">{won(calc[i].amount)}</TableCell>
+                  <TableCell className="text-right">{won(calc[i].unit)}원</TableCell>
+                  <TableCell className="text-right">{won(calc[i].amount)}원</TableCell>
                   <TableCell>
                     <Select value={r.kind} onValueChange={(v) => update(r.key, { kind: v as ShipKind })} disabled={r.printed}>
                       <SelectTrigger aria-label={`${i + 1}행 구분`}>
@@ -233,34 +264,14 @@ export default function ShipmentEntryPage() {
             <TableFooter>
               <TableRow>
                 <TableCell colSpan={6}>합계</TableCell>
-                <TableCell className="text-right">{won(totalAmount)}</TableCell>
+                <TableCell className="text-right">{won(totalAmount)}원</TableCell>
                 <TableCell />
                 <TableCell>총 {won(totalQty)}부</TableCell>
                 <TableCell />
               </TableRow>
             </TableFooter>
           </Table>
-          {rows.some((r) => r.printed) && (
-            <p className="text-xs text-muted-foreground">인쇄된 행은 수정·삭제할 수 없습니다. 추가분은 [+ 행 추가]로 입력하세요.</p>
-          )}
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setDirty(true)
-                setRows((rs) => [...rs, newRow()])
-              }}
-            >
-              + 행 추가
-            </Button>
-            <div className="ml-auto flex items-center gap-2">
-              {error && <p className="text-sm text-destructive">{error}</p>}
-              <Button variant="outline" onClick={() => guard(load)}>취소</Button>
-              <Button variant="outline" className="text-destructive" onClick={remove}>삭제</Button>
-              <Button onClick={save}>저장</Button>
-            </div>
-          </div>
-        </>
+        </ListCard>
       )}
     </>
   )

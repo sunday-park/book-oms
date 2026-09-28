@@ -1,6 +1,6 @@
 'use client'
 
-import { Check, ChevronsUpDown } from 'lucide-react'
+import { Check, ChevronDown } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
@@ -31,7 +31,7 @@ export function EntityCombobox({ label, options, value, onChange, placeholder = 
           <span className={cn('truncate', !selected && !(allLabel && value === null) && 'text-muted-foreground')}>
             {selected ? selected.label : allLabel && value === null ? allLabel : placeholder}
           </span>
-          <ChevronsUpDown className="size-4 opacity-50" />
+          <ChevronDown className="size-4 opacity-60" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-0" align="start">

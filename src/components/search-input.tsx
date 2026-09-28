@@ -1,5 +1,6 @@
 'use client'
 
+import { Search } from 'lucide-react'
 import { useId } from 'react'
 import { Input } from '@/components/ui/input'
 
@@ -12,13 +13,14 @@ export function SearchInput({ value, onChange, suggestions, placeholder }: {
 }) {
   const listId = useId()
   return (
-    <>
-      <Input className="w-56" value={value} onChange={(e) => onChange(e.target.value)} list={listId} placeholder={placeholder} />
+    <div className="relative w-full min-w-64">
+      <Search className="pointer-events-none absolute top-1/2 left-3.5 size-[18px] -translate-y-1/2 text-slate-500" />
+      <Input className="pl-10" value={value} onChange={(e) => onChange(e.target.value)} list={listId} placeholder={placeholder} />
       <datalist id={listId}>
         {[...new Set(suggestions)].map((s) => (
           <option key={s} value={s} />
         ))}
       </datalist>
-    </>
+    </div>
   )
 }

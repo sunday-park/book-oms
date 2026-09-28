@@ -4,12 +4,12 @@ import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { EntityCombobox } from '@/components/entity-combobox'
 import { FormDialog } from '@/components/form-dialog'
+import { ListCard } from '@/components/list-card'
 import { PageHeader } from '@/components/page-header'
 import { Field, SearchBar } from '@/components/search-bar'
-import { EmptyRow, RowActions } from '@/components/table-helpers'
-import { Button } from '@/components/ui/button'
+import { AddButton, Code, ColHead, DeleteButton, EmptyRow, SelectableRow } from '@/components/table-helpers'
 import { Input } from '@/components/ui/input'
-import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Table, TableBody, TableCell, TableFooter, TableHeader, TableRow } from '@/components/ui/table'
 import { none, useQuery } from '@/hooks/use-query'
 import { createReturn, deleteReturn, listReturns } from '@/lib/actions/inventory'
 import { listBookstores, listBooks, listPublishers } from '@/lib/actions/master'
@@ -31,6 +31,8 @@ export default function ReturnsPage() {
     [] as ReturnRow[],
   )
   const total = useMemo(() => list.data.reduce((s, r) => s + r.qty, 0), [list.data])
+  const [selId, setSelId] = useState<number | null>(null)
+  const selected = list.data.find((r) => r.id === selId)
 
   const [form, setForm] = useState<Form | null>(null)
   const [error, setError] = useState('')
@@ -55,21 +57,13 @@ export default function ReturnsPage() {
     if (!confirm(`${r.date} '${r.book_name}' ${r.qty}부 반품을 삭제할까요?`)) return
     const res = await deleteReturn(r.id)
     if (!res.ok) return toast.error(res.error)
+    setSelId(null)
     list.reload()
   }
 
   return (
     <>
-      <PageHeader title="반품 관리">
-        <Button
-          onClick={() => {
-            setError('')
-            setForm({ date: today(), publisher_id: f.pubId, bookstore_id: f.storeId, book_id: null, qty: 0 })
-          }}
-        >
-          + 반품 등록
-        </Button>
-      </PageHeader>
+      <PageHeader title="반품 관리" />
       <SearchBar onReset={() => setF(initFilter())} onSearch={list.reload}>
         <Field label="시작일">
           <Input type="date" className="w-40" value={f.from} onChange={(e) => setF({ ...f, from: e.target.value })} />
@@ -84,42 +78,53 @@ export default function ReturnsPage() {
           <EntityCombobox label="서점" allLabel="전체" options={storeOptions(stores.data)} value={f.storeId} onChange={(v) => setF({ ...f, storeId: v })} />
         </Field>
       </SearchBar>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>반품날짜</TableHead>
-            <TableHead>출판사</TableHead>
-            <TableHead>서점</TableHead>
-            <TableHead>도서코드</TableHead>
-            <TableHead>도서명</TableHead>
-            <TableHead className="text-right">부수</TableHead>
-            <TableHead className="w-24" />
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {list.data.map((r) => (
-            <TableRow key={r.id}>
-              <TableCell>{r.date}</TableCell>
-              <TableCell>{r.publisher_name}</TableCell>
-              <TableCell>{r.bookstore_name}</TableCell>
-              <TableCell>{r.book_code}</TableCell>
-              <TableCell>{r.book_name}</TableCell>
-              <TableCell className="text-right">{won(r.qty)}</TableCell>
-              <TableCell>
-                <RowActions onDelete={() => remove(r)} />
-              </TableCell>
+      <ListCard
+        title="반품 내역"
+        count={`${list.data.length}건`}
+        actions={
+          <>
+            <DeleteButton disabled={!selected} onClick={() => selected && remove(selected)} />
+            <AddButton
+              onClick={() => {
+                setError('')
+                setForm({ date: today(), publisher_id: f.pubId, bookstore_id: f.storeId, book_id: null, qty: 0 })
+              }}
+            />
+          </>
+        }
+      >
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <ColHead>반품날짜</ColHead>
+              <ColHead>출판사</ColHead>
+              <ColHead>서점</ColHead>
+              <ColHead>도서코드</ColHead>
+              <ColHead>도서명</ColHead>
+              <ColHead>부수</ColHead>
             </TableRow>
-          ))}
-          <EmptyRow show={list.data.length === 0} cols={7} />
-        </TableBody>
-        <TableFooter>
-          <TableRow>
-            <TableCell colSpan={5}>총 반품부수</TableCell>
-            <TableCell className="text-right">{won(total)}</TableCell>
-            <TableCell />
-          </TableRow>
-        </TableFooter>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {list.data.map((r) => (
+              <SelectableRow key={r.id} selected={r.id === selId} onSelect={() => setSelId(r.id)}>
+                <TableCell className="font-mono text-sm">{r.date}</TableCell>
+                <TableCell>{r.publisher_name}</TableCell>
+                <TableCell>{r.bookstore_name}</TableCell>
+                <TableCell><Code>{r.book_code}</Code></TableCell>
+                <TableCell className="font-semibold">{r.book_name}</TableCell>
+                <TableCell className="text-right">{won(r.qty)}</TableCell>
+              </SelectableRow>
+            ))}
+            <EmptyRow show={list.data.length === 0} cols={6} />
+          </TableBody>
+          <TableFooter>
+            <TableRow>
+              <TableCell colSpan={5}>총 반품부수</TableCell>
+              <TableCell className="text-right">{won(total)}</TableCell>
+            </TableRow>
+          </TableFooter>
+        </Table>
+      </ListCard>
       <FormDialog open={!!form} title="반품 등록" error={error} onClose={() => setForm(null)} onSave={save}>
         {form && (
           <>

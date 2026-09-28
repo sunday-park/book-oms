@@ -1,5 +1,6 @@
 'use client'
 
+import { Printer } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { EntityCombobox } from '@/components/entity-combobox'
 import { PageHeader } from '@/components/page-header'
@@ -28,10 +29,13 @@ export default function LedgerPage() {
   return (
     <>
       <PageHeader title="재고 원장">
-        <Button onClick={() => window.print()} disabled={stock.data.length === 0}>출력</Button>
+        <Button className="h-10 gap-1.5 px-4 text-[15px] font-semibold" onClick={() => window.print()} disabled={stock.data.length === 0}>
+          <Printer />
+          출력
+        </Button>
       </PageHeader>
       <SearchBar onReset={() => setPubId(pubs.data[0]?.id ?? null)} onSearch={stock.reload}>
-        <Field label="출판사">
+        <Field label="출판사 *">
           <EntityCombobox label="출판사" options={pubOptions(pubs.data)} value={pubId} onChange={setPubId} />
         </Field>
       </SearchBar>

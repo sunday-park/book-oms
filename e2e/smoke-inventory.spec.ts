@@ -40,7 +40,8 @@ test('입고 관리 스모크: 목록 노출 + 빈 값 저장 검증', async ({ 
   const footerRow = page.getByRole('row').filter({ hasText: '총 입고부수' })
   await expect(footerRow).toContainText('0')
 
-  await page.getByRole('button', { name: '+ 입고 등록' }).click()
+  await expect(page.getByRole('button', { name: '삭제' })).toBeDisabled()
+  await page.getByRole('button', { name: '등록', exact: true }).click()
   const dialog = page.getByRole('dialog')
   await expect(dialog).toBeVisible()
   await dialog.getByRole('button', { name: '저장' }).click()
@@ -69,7 +70,8 @@ test('반품 관리 스모크: 목록 노출 + 빈 값 저장 검증', async ({ 
   const footerRow = page.getByRole('row').filter({ hasText: '총 반품부수' })
   await expect(footerRow).toContainText('0')
 
-  await page.getByRole('button', { name: '+ 반품 등록' }).click()
+  await expect(page.getByRole('button', { name: '삭제' })).toBeDisabled()
+  await page.getByRole('button', { name: '등록', exact: true }).click()
   const dialog = page.getByRole('dialog')
   await expect(dialog).toBeVisible()
   await dialog.getByRole('button', { name: '저장' }).click()

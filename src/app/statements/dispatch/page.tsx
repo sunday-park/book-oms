@@ -1,5 +1,6 @@
 'use client'
 
+import { Printer } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { PageHeader } from '@/components/page-header'
 import { Notice, PrintSheet } from '@/components/print-sheet'
@@ -29,7 +30,10 @@ export default function DispatchPage() {
   return (
     <>
       <PageHeader title="출고증">
-        <Button onClick={() => window.print()} disabled={groups.data.length === 0}>출력</Button>
+        <Button className="h-10 gap-1.5 px-4 text-[15px] font-semibold" onClick={() => window.print()} disabled={groups.data.length === 0}>
+          <Printer />
+          출력
+        </Button>
       </PageHeader>
       <SearchBar
         onReset={() => {

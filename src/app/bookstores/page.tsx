@@ -3,14 +3,14 @@
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { FormDialog } from '@/components/form-dialog'
+import { ListCard } from '@/components/list-card'
 import { PageHeader } from '@/components/page-header'
 import { Field, SearchBar } from '@/components/search-bar'
 import { SearchInput } from '@/components/search-input'
-import { EmptyRow, RowActions } from '@/components/table-helpers'
-import { Button } from '@/components/ui/button'
+import { AddButton, Code, ColHead, EditButton, EmptyRow, SelectableRow } from '@/components/table-helpers'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table'
 import { useQuery } from '@/hooks/use-query'
 import { deleteBookstore, listBookstores, saveBookstore } from '@/lib/actions/master'
 import { REGIONS } from '@/lib/format'
@@ -28,6 +28,8 @@ export default function BookstoresPage() {
     const kw = keyword.toLowerCase()
     return data.filter((s) => (region === ALL || s.region === region) && (s.name.toLowerCase().includes(kw) || s.code.toLowerCase().includes(kw)))
   }, [data, keyword, region])
+  const [selId, setSelId] = useState<number | null>(null)
+  const selected = rows.find((s) => s.id === selId)
 
   const [edit, setEdit] = useState<{ id?: number; form: BookstoreInput } | null>(null)
   const [error, setError] = useState('')
@@ -48,15 +50,16 @@ export default function BookstoresPage() {
   async function remove(s: Bookstore) {
     if (!confirm(`'${s.name}'${josa(s.name, '을', '를')} 삭제할까요?`)) return
     const r = await deleteBookstore(s.id)
-    if (!r.ok) return toast.error(r.error)
+    if (!r.ok) return setError(r.error)
+    toast.success('삭제했습니다.')
+    setEdit(null)
+    setSelId(null)
     reload()
   }
 
   return (
     <>
-      <PageHeader title="서점 관리">
-        <Button onClick={() => open()}>+ 서점 등록</Button>
-      </PageHeader>
+      <PageHeader title="서점 관리" />
       <SearchBar
         onReset={() => {
           setKeyword('')
@@ -77,34 +80,48 @@ export default function BookstoresPage() {
             </SelectContent>
           </Select>
         </Field>
-        <Field label="서점">
+        <Field label="서점" className="flex-1">
           <SearchInput value={keyword} onChange={setKeyword} suggestions={data.map((s) => s.name)} placeholder="서점명 또는 코드" />
         </Field>
       </SearchBar>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>서점코드</TableHead>
-            <TableHead>서점명</TableHead>
-            <TableHead>지역</TableHead>
-            <TableHead className="w-32" />
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {rows.map((s) => (
-            <TableRow key={s.id}>
-              <TableCell>{s.code}</TableCell>
-              <TableCell>{s.name}</TableCell>
-              <TableCell>{s.region}</TableCell>
-              <TableCell>
-                <RowActions onEdit={() => open(s.id, s)} onDelete={() => remove(s)} />
-              </TableCell>
+      <ListCard
+        title="등록된 서점 목록"
+        count={`${rows.length}곳`}
+        actions={
+          <>
+            <EditButton disabled={!selected} onClick={() => selected && open(selected.id, selected)} />
+            <AddButton onClick={() => open()} />
+          </>
+        }
+      >
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <ColHead>서점코드</ColHead>
+              <ColHead>서점명</ColHead>
+              <ColHead>지역</ColHead>
             </TableRow>
-          ))}
-          <EmptyRow show={rows.length === 0} cols={4} />
-        </TableBody>
-      </Table>
-      <FormDialog open={!!edit} title={edit?.id ? '서점 수정' : '서점 등록'} error={error} onClose={() => setEdit(null)} onSave={save}>
+          </TableHeader>
+          <TableBody>
+            {rows.map((s) => (
+              <SelectableRow key={s.id} selected={s.id === selId} onSelect={() => setSelId(s.id)}>
+                <TableCell><Code>{s.code}</Code></TableCell>
+                <TableCell className="font-semibold">{s.name}</TableCell>
+                <TableCell>{s.region}</TableCell>
+              </SelectableRow>
+            ))}
+            <EmptyRow show={rows.length === 0} cols={3} />
+          </TableBody>
+        </Table>
+      </ListCard>
+      <FormDialog
+        open={!!edit}
+        title={edit?.id ? '서점 수정' : '서점 등록'}
+        error={error}
+        onClose={() => setEdit(null)}
+        onSave={save}
+        onDelete={edit?.id && selected ? () => remove(selected) : undefined}
+      >
         {edit && (
           <>
             <Field label="서점코드 *">

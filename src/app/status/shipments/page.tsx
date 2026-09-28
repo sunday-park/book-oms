@@ -2,11 +2,12 @@
 
 import { useMemo, useState } from 'react'
 import { EntityCombobox } from '@/components/entity-combobox'
+import { ListCard } from '@/components/list-card'
 import { PageHeader } from '@/components/page-header'
 import { Field, SearchBar } from '@/components/search-bar'
-import { EmptyRow } from '@/components/table-helpers'
+import { Code, ColHead, EmptyRow } from '@/components/table-helpers'
 import { Input } from '@/components/ui/input'
-import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Table, TableBody, TableCell, TableFooter, TableHeader, TableRow } from '@/components/ui/table'
 import { useQuery } from '@/hooks/use-query'
 import { listShipmentStatus } from '@/lib/actions/inventory'
 import { listBookstores, listPublishers } from '@/lib/actions/master'
@@ -42,39 +43,41 @@ export default function ShipmentStatusPage() {
           <EntityCombobox label="서점" allLabel="전체" options={storeOptions(stores.data)} value={f.storeId} onChange={(v) => setF({ ...f, storeId: v })} />
         </Field>
       </SearchBar>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>도서코드</TableHead>
-            <TableHead>도서명</TableHead>
-            <TableHead>날짜</TableHead>
-            <TableHead>출판사</TableHead>
-            <TableHead>서점</TableHead>
-            <TableHead>구분</TableHead>
-            <TableHead className="text-right">출고부수</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {list.data.map((r) => (
-            <TableRow key={r.id}>
-              <TableCell>{r.book_code}</TableCell>
-              <TableCell>{r.book_name}</TableCell>
-              <TableCell>{r.date}</TableCell>
-              <TableCell>{r.publisher_name}</TableCell>
-              <TableCell>{r.bookstore_name}</TableCell>
-              <TableCell>{r.kind}</TableCell>
-              <TableCell className="text-right">{won(r.qty)}</TableCell>
+      <ListCard title="출고 내역" count={`${list.data.length}건`}>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <ColHead>도서코드</ColHead>
+              <ColHead>도서명</ColHead>
+              <ColHead>날짜</ColHead>
+              <ColHead>출판사</ColHead>
+              <ColHead>서점</ColHead>
+              <ColHead>구분</ColHead>
+              <ColHead>출고부수</ColHead>
             </TableRow>
-          ))}
-          <EmptyRow show={list.data.length === 0} cols={7} />
-        </TableBody>
-        <TableFooter>
-          <TableRow>
-            <TableCell colSpan={6}>총 출고부수</TableCell>
-            <TableCell className="text-right">{won(total)}</TableCell>
-          </TableRow>
-        </TableFooter>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {list.data.map((r) => (
+              <TableRow key={r.id}>
+                <TableCell><Code>{r.book_code}</Code></TableCell>
+                <TableCell className="font-semibold">{r.book_name}</TableCell>
+                <TableCell className="font-mono text-sm">{r.date}</TableCell>
+                <TableCell>{r.publisher_name}</TableCell>
+                <TableCell>{r.bookstore_name}</TableCell>
+                <TableCell>{r.kind}</TableCell>
+                <TableCell className="text-right">{won(r.qty)}</TableCell>
+              </TableRow>
+            ))}
+            <EmptyRow show={list.data.length === 0} cols={7} />
+          </TableBody>
+          <TableFooter>
+            <TableRow>
+              <TableCell colSpan={6}>총 출고부수</TableCell>
+              <TableCell className="text-right">{won(total)}</TableCell>
+            </TableRow>
+          </TableFooter>
+        </Table>
+      </ListCard>
     </>
   )
 }

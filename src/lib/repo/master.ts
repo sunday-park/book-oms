@@ -13,6 +13,8 @@ export type Book = {
   publisher_code: string
   publisher_name: string
   code: string
+  /** 출판사 내 순번 */
+  seq: number
   name: string
   list_price: number
 }
@@ -65,7 +67,7 @@ export function deleteBookstore(db: DB, id: number) {
 }
 
 // ── 도서 ──
-const BOOK_SELECT = `SELECT b.id, b.publisher_id, p.code AS publisher_code, p.name AS publisher_name, b.code, b.name, b.list_price
+const BOOK_SELECT = `SELECT b.id, b.publisher_id, p.code AS publisher_code, p.name AS publisher_name, b.code, b.seq, b.name, b.list_price
   FROM books b JOIN publishers p ON p.id = b.publisher_id`
 
 export function listBooks(db: DB, publisherId?: number) {

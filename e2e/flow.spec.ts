@@ -31,14 +31,24 @@ test('출판사 → 서점 → 도서 → 입고 → 출고 → 반품 → 현�
   const dlg = page.getByRole('dialog')
 
   await page.goto('/publishers')
-  await page.getByRole('button', { name: '+ 출판사 등록' }).click()
+  await page.getByRole('button', { name: '등록', exact: true }).click()
   await dlg.getByLabel('출판사코드').fill('P01')
   await dlg.getByLabel('출판사명').fill('한빛출판')
   await dlg.getByRole('button', { name: '저장' }).click()
   await expect(page.getByRole('cell', { name: '한빛출판' })).toBeVisible()
 
+  // 행 선택 → 헤더 [수정] 으로 수정 다이얼로그(삭제 버튼 포함)가 열린다
+  await expect(page.getByRole('button', { name: '수정' })).toBeDisabled()
+  await page.getByRole('cell', { name: '한빛출판' }).click()
+  await page.getByRole('button', { name: '수정' }).click()
+  await expect(dlg.getByRole('heading', { name: '출판사 수정' })).toBeVisible()
+  await expect(dlg.getByLabel('출판사명')).toHaveValue('한빛출판')
+  await expect(dlg.getByRole('button', { name: '삭제' })).toBeVisible()
+  await dlg.getByRole('button', { name: '취소' }).click()
+  await expect(dlg).toBeHidden()
+
   await page.goto('/bookstores')
-  await page.getByRole('button', { name: '+ 서점 등록' }).click()
+  await page.getByRole('button', { name: '등록', exact: true }).click()
   await dlg.getByLabel('서점코드').fill('S01')
   await dlg.getByLabel('서점명').fill('교보문고 광화문')
   await dlg.getByRole('combobox', { name: '지역' }).click()
@@ -47,7 +57,7 @@ test('출판사 → 서점 → 도서 → 입고 → 출고 → 반품 → 현�
   await expect(page.getByRole('cell', { name: '교보문고 광화문' })).toBeVisible()
 
   // 마지막 unsaved-edit 가드 검증에서 '다른 서점으로 변경'을 시도하기 위한 두 번째 서점
-  await page.getByRole('button', { name: '+ 서점 등록' }).click()
+  await page.getByRole('button', { name: '등록', exact: true }).click()
   await dlg.getByLabel('서점코드').fill('S02')
   await dlg.getByLabel('서점명').fill('알라딘 강남점')
   await dlg.getByRole('combobox', { name: '지역' }).click()
@@ -57,14 +67,14 @@ test('출판사 → 서점 → 도서 → 입고 → 출고 → 반품 → 현�
 
   await page.goto('/books')
   await expect(page.getByRole('combobox', { name: '출판사' })).toHaveText(/한빛출판/)
-  await page.getByRole('button', { name: '+ 도서 등록' }).click()
+  await page.getByRole('button', { name: '등록', exact: true }).click()
   await dlg.getByLabel('도서명').fill('리액트 입문')
   await dlg.getByLabel('정가').fill('20000')
   await dlg.getByRole('button', { name: '저장' }).click()
   await expect(page.getByRole('cell', { name: 'P01-0001' })).toBeVisible()
 
   await page.goto('/receipts')
-  await page.getByRole('button', { name: '+ 입고 등록' }).click()
+  await page.getByRole('button', { name: '등록', exact: true }).click()
   await pick(page, dlg, '출판사', '한빛')
   await pick(page, dlg, '도서', '리액트')
   await dlg.getByLabel('입고부수').fill('100')
@@ -83,7 +93,7 @@ test('출판사 → 서점 → 도서 → 입고 → 출고 → 반품 → 현�
   await expect(page.getByText('저장했습니다.')).toBeVisible()
 
   await page.goto('/returns')
-  await page.getByRole('button', { name: '+ 반품 등록' }).click()
+  await page.getByRole('button', { name: '등록', exact: true }).click()
   await pick(page, dlg, '출판사', '한빛')
   await pick(page, dlg, '서점', '교보')
   await pick(page, dlg, '도서', '리액트')
@@ -144,6 +154,15 @@ test('출판사 → 서점 → 도서 → 입고 → 출고 → 반품 → 현�
   await expect(printRows).toHaveCount(1)
   await expect(printRows.first()).toContainText('리액트 입문')
   await expect(printRows.first()).toContainText('5')
+
+  // 수정 다이얼로그의 [삭제]도 기존 삭제 가드를 그대로 따른다 (소속 도서가 있는 출판사는 삭제 불가)
+  await page.goto('/publishers')
+  await page.getByRole('cell', { name: '한빛출판' }).click()
+  await page.getByRole('button', { name: '수정' }).click()
+  await dlg.getByRole('button', { name: '삭제' }).click()
+  await expect(dlg).toContainText('소속 도서가 있어 삭제할 수 없습니다.')
+  await dlg.getByRole('button', { name: '취소' }).click()
+  await expect(page.getByRole('cell', { name: '한빛출판' })).toBeVisible()
 
   errors.assertClean()
 })

@@ -1,5 +1,6 @@
 'use client'
 
+import { Printer } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { EntityCombobox } from '@/components/entity-combobox'
@@ -44,7 +45,10 @@ export default function StatementPrintPage() {
   return (
     <>
       <PageHeader title="명세서 출력">
-        <Button onClick={print} disabled={items.data.length === 0}>출력</Button>
+        <Button className="h-10 gap-1.5 px-4 text-[15px] font-semibold" onClick={print} disabled={items.data.length === 0}>
+          <Printer />
+          출력
+        </Button>
       </PageHeader>
       <SearchBar
         onReset={() => {
@@ -57,10 +61,10 @@ export default function StatementPrintPage() {
         <Field label="날짜">
           <Input type="date" className="w-40" value={date} onChange={(e) => setDate(e.target.value)} />
         </Field>
-        <Field label="출판사">
+        <Field label="출판사 *">
           <EntityCombobox label="출판사" options={pubOptions(pubs.data)} value={pubId} onChange={setPubId} />
         </Field>
-        <Field label="서점">
+        <Field label="서점 *">
           <EntityCombobox label="서점" options={storeOptions(stores.data)} value={storeId} onChange={setStoreId} />
         </Field>
       </SearchBar>

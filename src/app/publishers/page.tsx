@@ -3,13 +3,13 @@
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { FormDialog } from '@/components/form-dialog'
+import { ListCard } from '@/components/list-card'
 import { PageHeader } from '@/components/page-header'
 import { Field, SearchBar } from '@/components/search-bar'
 import { SearchInput } from '@/components/search-input'
-import { EmptyRow, RowActions } from '@/components/table-helpers'
-import { Button } from '@/components/ui/button'
+import { AddButton, Code, ColHead, EditButton, EmptyRow, SelectableRow } from '@/components/table-helpers'
 import { Input } from '@/components/ui/input'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table'
 import { useQuery } from '@/hooks/use-query'
 import { deletePublisher, listPublishers, savePublisher } from '@/lib/actions/master'
 import { josa } from '@/lib/josa'
@@ -24,6 +24,8 @@ export default function PublishersPage() {
     const kw = keyword.toLowerCase()
     return data.filter((p) => p.name.toLowerCase().includes(kw) || p.code.toLowerCase().includes(kw))
   }, [data, keyword])
+  const [selId, setSelId] = useState<number | null>(null)
+  const selected = rows.find((p) => p.id === selId)
 
   const [edit, setEdit] = useState<{ id?: number; form: PublisherInput } | null>(null)
   const [error, setError] = useState('')
@@ -44,48 +46,63 @@ export default function PublishersPage() {
   async function remove(p: Publisher) {
     if (!confirm(`'${p.name}'${josa(p.name, '을', '를')} 삭제할까요?`)) return
     const r = await deletePublisher(p.id)
-    if (!r.ok) return toast.error(r.error)
+    if (!r.ok) return setError(r.error)
+    toast.success('삭제했습니다.')
+    setEdit(null)
+    setSelId(null)
     reload()
   }
 
   return (
     <>
-      <PageHeader title="출판사 관리">
-        <Button onClick={() => open()}>+ 출판사 등록</Button>
-      </PageHeader>
+      <PageHeader title="출판사 관리" />
       <SearchBar onReset={() => setKeyword('')} onSearch={reload}>
-        <Field label="출판사">
+        <Field label="출판사" className="flex-1">
           <SearchInput value={keyword} onChange={setKeyword} suggestions={data.map((p) => p.name)} placeholder="출판사명 또는 코드" />
         </Field>
       </SearchBar>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>출판사코드</TableHead>
-            <TableHead>출판사명</TableHead>
-            <TableHead>전화번호</TableHead>
-            <TableHead>팩스번호</TableHead>
-            <TableHead>사업자번호</TableHead>
-            <TableHead className="w-32" />
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {rows.map((p) => (
-            <TableRow key={p.id}>
-              <TableCell>{p.code}</TableCell>
-              <TableCell>{p.name}</TableCell>
-              <TableCell>{p.phone}</TableCell>
-              <TableCell>{p.fax}</TableCell>
-              <TableCell>{p.biz_no}</TableCell>
-              <TableCell>
-                <RowActions onEdit={() => open(p.id, { ...p, biz_no: p.biz_no ?? '' })} onDelete={() => remove(p)} />
-              </TableCell>
+      <ListCard
+        title="등록된 출판사 목록"
+        count={`${rows.length}곳`}
+        actions={
+          <>
+            <EditButton disabled={!selected} onClick={() => selected && open(selected.id, { ...selected, biz_no: selected.biz_no ?? '' })} />
+            <AddButton onClick={() => open()} />
+          </>
+        }
+      >
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <ColHead>출판사코드</ColHead>
+              <ColHead>출판사명</ColHead>
+              <ColHead>전화번호</ColHead>
+              <ColHead>팩스번호</ColHead>
+              <ColHead>사업자번호</ColHead>
             </TableRow>
-          ))}
-          <EmptyRow show={rows.length === 0} cols={6} />
-        </TableBody>
-      </Table>
-      <FormDialog open={!!edit} title={edit?.id ? '출판사 수정' : '출판사 등록'} error={error} onClose={() => setEdit(null)} onSave={save}>
+          </TableHeader>
+          <TableBody>
+            {rows.map((p) => (
+              <SelectableRow key={p.id} selected={p.id === selId} onSelect={() => setSelId(p.id)}>
+                <TableCell><Code>{p.code}</Code></TableCell>
+                <TableCell className="font-semibold">{p.name}</TableCell>
+                <TableCell className="font-mono text-sm">{p.phone}</TableCell>
+                <TableCell className="font-mono text-sm">{p.fax}</TableCell>
+                <TableCell className="font-mono text-sm">{p.biz_no}</TableCell>
+              </SelectableRow>
+            ))}
+            <EmptyRow show={rows.length === 0} cols={5} />
+          </TableBody>
+        </Table>
+      </ListCard>
+      <FormDialog
+        open={!!edit}
+        title={edit?.id ? '출판사 수정' : '출판사 등록'}
+        error={error}
+        onClose={() => setEdit(null)}
+        onSave={save}
+        onDelete={edit?.id && selected ? () => remove(selected) : undefined}
+      >
         {edit && (
           <>
             <Field label="출판사코드 *">

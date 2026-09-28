@@ -30,7 +30,8 @@ test('출판사 관리 스모크: 목록 노출 + 빈 값 저장 검증', async 
   await expect(page.getByRole('button', { name: '초기화' })).toBeVisible()
   await expect(page.getByRole('button', { name: '조회' })).toBeVisible()
 
-  await page.getByRole('button', { name: '+ 출판사 등록' }).click()
+  await expect(page.getByRole('button', { name: '수정' })).toBeDisabled()
+  await page.getByRole('button', { name: '등록', exact: true }).click()
   const dialog = page.getByRole('dialog')
   await expect(dialog).toBeVisible()
   await dialog.getByRole('button', { name: '저장' }).click()
@@ -52,7 +53,8 @@ test('서점 관리 스모크: 목록 노출 + 빈 값 저장 검증', async ({ 
   await expect(page.getByRole('button', { name: '초기화' })).toBeVisible()
   await expect(page.getByRole('button', { name: '조회' })).toBeVisible()
 
-  await page.getByRole('button', { name: '+ 서점 등록' }).click()
+  await expect(page.getByRole('button', { name: '수정' })).toBeDisabled()
+  await page.getByRole('button', { name: '등록', exact: true }).click()
   const dialog = page.getByRole('dialog')
   await expect(dialog).toBeVisible()
   await dialog.getByRole('button', { name: '저장' }).click()
@@ -74,7 +76,8 @@ test('도서 관리 스모크: 목록 노출 + 빈 값 저장 검증', async ({ 
   await expect(page.getByRole('button', { name: '초기화' })).toBeVisible()
   await expect(page.getByRole('button', { name: '조회' })).toBeVisible()
 
-  await page.getByRole('button', { name: '+ 도서 등록' }).click()
+  await expect(page.getByRole('button', { name: '수정' })).toBeDisabled()
+  await page.getByRole('button', { name: '등록', exact: true }).click()
   const dialog = page.getByRole('dialog')
   await expect(dialog).toBeVisible()
   await dialog.getByRole('button', { name: '저장' }).click()

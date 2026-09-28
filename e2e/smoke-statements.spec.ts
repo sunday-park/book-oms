@@ -44,6 +44,8 @@ test('명세서 출력 스모크: 초기 상태 + 초기화/조회 + 인쇄 미�
   await page.emulateMedia({ media: 'print' })
   await expect(page.locator('aside')).not.toBeVisible()
   await expect(page.getByRole('button', { name: '조회' })).not.toBeVisible()
+  await expect(page.getByRole('navigation', { name: '현재 위치' })).not.toBeVisible()
+  await expect(page.getByRole('button', { name: '도움말' })).not.toBeVisible()
 
   errors.assertClean()
 })
