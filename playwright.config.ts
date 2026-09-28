@@ -12,4 +12,8 @@ export default defineConfig({
     reuseExistingServer: false,
     timeout: 120_000,
   },
+  projects: [
+    { name: 'smoke', testMatch: /smoke-.*\.spec\.ts/ },
+    { name: 'flow', testMatch: /flow\.spec\.ts/, dependencies: ['smoke'] },
+  ],
 })
