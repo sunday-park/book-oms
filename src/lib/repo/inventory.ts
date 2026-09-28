@@ -1,5 +1,6 @@
 import { type DB, all, get, run, tx } from '@/lib/db'
 import { calcAmount, calcUnitPrice, SHIP_KINDS, type ShipKind } from '@/lib/domain'
+import { josa } from '@/lib/josa'
 import { getBook } from '@/lib/repo/master'
 import { getStock } from '@/lib/repo/reports'
 import { AppError } from '@/lib/result'
@@ -7,7 +8,7 @@ import { requireDate, requireId, requireQty } from '@/lib/validate'
 
 function requireBookOf(db: DB, bookId: number | null, publisherId: number) {
   const book = getBook(db, requireId(bookId, '도서'))
-  if (book.publisher_id !== publisherId) throw new AppError(`'${book.name}'은(는) 선택한 출판사의 도서가 아닙니다.`)
+  if (book.publisher_id !== publisherId) throw new AppError(`'${book.name}'${josa(book.name, '은', '는')} 선택한 출판사의 도서가 아닙니다.`)
   return book
 }
 
@@ -140,11 +141,16 @@ export function saveShipment(db: DB, input: ShipmentInput): { id: number; warnin
   const bookstoreId = requireId(input.bookstore_id, '서점')
   if (input.items.length === 0) throw new AppError('도서를 1권 이상 추가하세요.')
   const rows = input.items.map((it, i) => {
-    const book = requireBookOf(db, it.book_id, publisherId)
-    if (!(it.rate > 0 && it.rate <= 100)) throw new AppError(`${i + 1}행: 출고율은 0 초과 100 이하로 입력하세요.`)
-    if (!SHIP_KINDS.includes(it.kind)) throw new AppError(`${i + 1}행: 구분을 선택하세요.`)
-    requireQty(it.qty, `${i + 1}행 부수`)
-    return { ...it, book }
+    try {
+      const book = requireBookOf(db, it.book_id, publisherId)
+      if (!(it.rate > 0 && it.rate <= 100)) throw new AppError('출고율은 0 초과 100 이하로 입력하세요.')
+      if (!SHIP_KINDS.includes(it.kind)) throw new AppError('구분을 선택하세요.')
+      requireQty(it.qty, '부수')
+      return { ...it, book, rowNum: i + 1 }
+    } catch (e) {
+      if (e instanceof AppError) throw new AppError(`${i + 1}행: ${e.message}`)
+      throw e
+    }
   })
 
   const id = tx(db, () => {
@@ -152,24 +158,32 @@ export function saveShipment(db: DB, input: ShipmentInput): { id: number; warnin
       findShipmentId(db, date, publisherId, bookstoreId) ??
       run(db, 'INSERT INTO shipments (date, publisher_id, bookstore_id) VALUES (?, ?, ?)', date, publisherId, bookstoreId)
     const existing = new Map(
-      all<{ id: number; book_id: number; list_price: number }>(db, 'SELECT id, book_id, list_price FROM shipment_items WHERE shipment_id = ?', shipmentId).map(
-        (r) => [r.id, r],
-      ),
+      all<{ id: number; book_id: number; list_price: number; rate: number; kind: ShipKind; qty: number; printed_at: string | null }>(
+        db,
+        'SELECT id, book_id, list_price, rate, kind, qty, printed_at FROM shipment_items WHERE shipment_id = ?',
+        shipmentId,
+      ).map((r) => [r.id, r]),
     )
     const kept = new Set<number>()
     for (const r of rows) {
       const prev = r.id ? existing.get(r.id) : undefined
+      if (prev?.printed_at) {
+        // 인쇄된 행은 읽기 전용 — 값이 그대로면 유지, 바뀌었으면 거절
+        if (prev.book_id !== r.book.id || prev.rate !== r.rate || prev.kind !== r.kind || prev.qty !== r.qty) {
+          throw new AppError(`${r.rowNum}행: 이미 인쇄된 행은 수정할 수 없습니다. 추가분은 새 행으로 입력하세요.`)
+        }
+        kept.add(prev.id)
+        continue
+      }
       // 같은 도서면 저장 당시 정가 유지, 새 행이거나 도서가 바뀌면 현재 정가
       const listPrice = prev && prev.book_id === r.book.id ? prev.list_price : r.book.list_price
       const unit = calcUnitPrice(listPrice, r.rate)
       const amount = calcAmount(unit, r.qty)
       if (prev) {
-        // 도서가 바뀐 행은 새로 추가된 것으로 보고 인쇄 표시를 지운다
         run(
           db,
-          `UPDATE shipment_items SET printed_at = CASE WHEN book_id = ? THEN printed_at ELSE NULL END,
-             book_id = ?, list_price = ?, rate = ?, unit_price = ?, amount = ?, kind = ?, qty = ? WHERE id = ?`,
-          r.book.id, r.book.id, listPrice, r.rate, unit, amount, r.kind, r.qty, prev.id,
+          `UPDATE shipment_items SET book_id = ?, list_price = ?, rate = ?, unit_price = ?, amount = ?, kind = ?, qty = ? WHERE id = ?`,
+          r.book.id, listPrice, r.rate, unit, amount, r.kind, r.qty, prev.id,
         )
         kept.add(prev.id)
       } else {
@@ -180,7 +194,11 @@ export function saveShipment(db: DB, input: ShipmentInput): { id: number; warnin
         )
       }
     }
-    for (const prevId of existing.keys()) if (!kept.has(prevId)) run(db, 'DELETE FROM shipment_items WHERE id = ?', prevId)
+    for (const prevId of existing.keys()) {
+      if (kept.has(prevId)) continue
+      if (existing.get(prevId)!.printed_at) throw new AppError('이미 인쇄된 행은 삭제할 수 없습니다.')
+      run(db, 'DELETE FROM shipment_items WHERE id = ?', prevId)
+    }
     return shipmentId
   })
 
@@ -193,6 +211,9 @@ export function saveShipment(db: DB, input: ShipmentInput): { id: number; warnin
 }
 
 export function deleteShipment(db: DB, id: number) {
+  if (get(db, 'SELECT 1 FROM shipment_items WHERE shipment_id = ? AND printed_at IS NOT NULL LIMIT 1', id)) {
+    throw new AppError('이미 인쇄된 명세가 있어 삭제할 수 없습니다.')
+  }
   run(db, 'DELETE FROM shipments WHERE id = ?', id)
 }
 

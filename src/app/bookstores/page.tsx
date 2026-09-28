@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useQuery } from '@/hooks/use-query'
 import { deleteBookstore, listBookstores, saveBookstore } from '@/lib/actions/master'
 import { REGIONS } from '@/lib/format'
+import { josa } from '@/lib/josa'
 import type { Bookstore, BookstoreInput } from '@/lib/repo/master'
 
 const EMPTY: BookstoreInput = { code: '', name: '', region: '' }
@@ -23,10 +24,10 @@ export default function BookstoresPage() {
   const [keyword, setKeyword] = useState('')
   const [region, setRegion] = useState(ALL)
   const { data, reload } = useQuery(listBookstores, [], [] as Bookstore[])
-  const rows = useMemo(
-    () => data.filter((s) => (region === ALL || s.region === region) && (s.name.includes(keyword) || s.code.includes(keyword))),
-    [data, keyword, region],
-  )
+  const rows = useMemo(() => {
+    const kw = keyword.toLowerCase()
+    return data.filter((s) => (region === ALL || s.region === region) && (s.name.toLowerCase().includes(kw) || s.code.toLowerCase().includes(kw)))
+  }, [data, keyword, region])
 
   const [edit, setEdit] = useState<{ id?: number; form: BookstoreInput } | null>(null)
   const [error, setError] = useState('')
@@ -45,7 +46,7 @@ export default function BookstoresPage() {
     reload()
   }
   async function remove(s: Bookstore) {
-    if (!confirm(`'${s.name}'을(를) 삭제할까요?`)) return
+    if (!confirm(`'${s.name}'${josa(s.name, '을', '를')} 삭제할까요?`)) return
     const r = await deleteBookstore(s.id)
     if (!r.ok) return toast.error(r.error)
     reload()

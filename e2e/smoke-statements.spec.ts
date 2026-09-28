@@ -32,8 +32,8 @@ test('명세서 출력 스모크: 초기 상태 + 초기화/조회 + 인쇄 미�
   await expect(page.getByRole('button', { name: '초기화' })).toBeVisible()
   await expect(page.getByRole('button', { name: '조회' })).toBeVisible()
 
-  await expect(page.getByLabel('날짜 (오늘)')).toHaveValue(today())
-  await expect(page.getByLabel('날짜 (오늘)')).toBeDisabled()
+  await expect(page.getByLabel('날짜')).toHaveValue(today())
+  await expect(page.getByLabel('날짜')).toBeEnabled()
 
   await expect(page.getByText('출판사와 서점을 선택하세요.')).toBeVisible()
   await expect(page.getByRole('button', { name: '출력' })).toBeDisabled()

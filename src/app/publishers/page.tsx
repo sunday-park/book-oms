@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useQuery } from '@/hooks/use-query'
 import { deletePublisher, listPublishers, savePublisher } from '@/lib/actions/master'
+import { josa } from '@/lib/josa'
 import type { Publisher, PublisherInput } from '@/lib/repo/master'
 
 const EMPTY: PublisherInput = { code: '', name: '', phone: '', fax: '', biz_no: '' }
@@ -19,7 +20,10 @@ const EMPTY: PublisherInput = { code: '', name: '', phone: '', fax: '', biz_no: 
 export default function PublishersPage() {
   const [keyword, setKeyword] = useState('')
   const { data, reload } = useQuery(listPublishers, [], [] as Publisher[])
-  const rows = useMemo(() => data.filter((p) => p.name.includes(keyword) || p.code.includes(keyword)), [data, keyword])
+  const rows = useMemo(() => {
+    const kw = keyword.toLowerCase()
+    return data.filter((p) => p.name.toLowerCase().includes(kw) || p.code.toLowerCase().includes(kw))
+  }, [data, keyword])
 
   const [edit, setEdit] = useState<{ id?: number; form: PublisherInput } | null>(null)
   const [error, setError] = useState('')
@@ -38,7 +42,7 @@ export default function PublishersPage() {
     reload()
   }
   async function remove(p: Publisher) {
-    if (!confirm(`'${p.name}'을(를) 삭제할까요?`)) return
+    if (!confirm(`'${p.name}'${josa(p.name, '을', '를')} 삭제할까요?`)) return
     const r = await deletePublisher(p.id)
     if (!r.ok) return toast.error(r.error)
     reload()

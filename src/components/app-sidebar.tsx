@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { hasUnsaved } from '@/lib/unsaved'
 import { cn } from '@/lib/utils'
 
 // 관리 메뉴는 [도서·서점·출판사] / [입고·반품] 두 묶음 사이에 희미한 구분선
@@ -53,6 +54,9 @@ export function AppSidebar() {
                   <Link
                     key={it.href}
                     href={it.href}
+                    onClick={(e) => {
+                      if (hasUnsaved() && !confirm('저장하지 않은 변경 내용이 있습니다. 버리고 이동할까요?')) e.preventDefault()
+                    }}
                     className={cn('block rounded-md px-2 py-1.5 text-sm hover:bg-accent', pathname === it.href && 'bg-accent font-medium')}
                   >
                     {it.label}

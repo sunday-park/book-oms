@@ -35,6 +35,6 @@ test('레이아웃(사이드바) 스모크: 콘솔/페이지 에러 없이 메�
 
   // 오프라인 제약 확인: 외부 호스트로 나가는 요청이 없어야 한다 (예: Google Fonts 등)
   for (const url of requestUrls) {
-    expect(url.startsWith('http://localhost:3100')).toBe(true)
+    expect(url.startsWith('http://127.0.0.1:3100')).toBe(true)
   }
 })

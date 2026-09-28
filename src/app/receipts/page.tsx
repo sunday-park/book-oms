@@ -43,6 +43,12 @@ export default function ReceiptsPage() {
     if (!r.ok) return setError(r.error)
     toast.success('저장했습니다.')
     setForm(null)
+    // 등록한 날짜가 현재 조회 기간 밖이면 새 행이 보이도록 기간을 넓힌다
+    setF((prev) =>
+      form.date >= prev.from && form.date <= prev.to
+        ? prev
+        : { ...prev, from: form.date < prev.from ? form.date : prev.from, to: form.date > prev.to ? form.date : prev.to },
+    )
     list.reload()
   }
   async function remove(r: Receipt) {

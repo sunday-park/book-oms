@@ -72,6 +72,9 @@ export function openDb(file: string): DB {
   if (file !== ':memory:') fs.mkdirSync(path.dirname(file), { recursive: true })
   const db = new sqlite.DatabaseSync(file)
   db.exec(SCHEMA)
+  // 새 DB(version 0)면 현재 스키마 버전으로 표시해둔다 — 이후 마이그레이션이 필요해지면 이 값으로 분기한다
+  const { user_version: version } = db.prepare('PRAGMA user_version').get() as { user_version: number }
+  if (version === 0) db.exec('PRAGMA user_version = 1')
   return db
 }
 

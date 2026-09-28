@@ -19,6 +19,7 @@ import { calcAmount, calcUnitPrice, DEFAULT_RATE, SHIP_KINDS, type ShipKind } fr
 import { today, won } from '@/lib/format'
 import { bookOptions, pubOptions, storeOptions } from '@/lib/options'
 import type { Book, Bookstore, Publisher } from '@/lib/repo/master'
+import { setUnsaved } from '@/lib/unsaved'
 
 type Row = {
   key: string
@@ -80,6 +81,19 @@ export default function ShipmentEntryPage() {
     void load()
   }, [load])
 
+  // dirty 상태를 사이드바와 공유하고, 저장하지 않은 채 탭을 닫거나 새로고침하면 경고한다
+  useEffect(() => {
+    setUnsaved(dirty)
+    if (!dirty) return
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', onBeforeUnload)
+    return () => window.removeEventListener('beforeunload', onBeforeUnload)
+  }, [dirty])
+  useEffect(() => () => setUnsaved(false), [])
+
   // 기존 행은 저장 당시 정가, 새 행·도서를 바꾼 행은 현재 정가
   const priceOf = (r: Row) =>
     r.snapshot && r.snapshot.book_id === r.book_id ? r.snapshot.list_price : r.book_id ? (bookMap.get(r.book_id)?.list_price ?? 0) : 0
@@ -113,7 +127,11 @@ export default function ShipmentEntryPage() {
     void load()
   }
   async function remove() {
-    if (!shipmentId) return setRows([newRow()])
+    if (!shipmentId) {
+      setRows([newRow()])
+      setDirty(false)
+      return
+    }
     if (!confirm('이 출고 명세를 삭제할까요?')) return
     const r = await deleteShipment(shipmentId)
     if (!r.ok) return toast.error(r.error)
@@ -172,16 +190,16 @@ export default function ShipmentEntryPage() {
                     {r.printed && <Badge variant="secondary" className="ml-2">인쇄됨</Badge>}
                   </TableCell>
                   <TableCell>
-                    <EntityCombobox label={`${i + 1}행 도서`} placeholder="도서 선택" options={bookOptions(books.data)} value={r.book_id} onChange={(v) => update(r.key, { book_id: v })} />
+                    <EntityCombobox label={`${i + 1}행 도서`} placeholder="도서 선택" options={bookOptions(books.data)} value={r.book_id} onChange={(v) => update(r.key, { book_id: v })} disabled={r.printed} />
                   </TableCell>
                   <TableCell className="text-right">{won(calc[i].listPrice)}</TableCell>
                   <TableCell>
-                    <Input aria-label={`${i + 1}행 출고율`} type="number" min={0} max={100} step="0.1" value={r.rate} onChange={(e) => update(r.key, { rate: Number(e.target.value) })} />
+                    <Input aria-label={`${i + 1}행 출고율`} type="number" min={0} max={100} step="0.1" value={r.rate} onChange={(e) => update(r.key, { rate: Number(e.target.value) })} disabled={r.printed} />
                   </TableCell>
                   <TableCell className="text-right">{won(calc[i].unit)}</TableCell>
                   <TableCell className="text-right">{won(calc[i].amount)}</TableCell>
                   <TableCell>
-                    <Select value={r.kind} onValueChange={(v) => update(r.key, { kind: v as ShipKind })}>
+                    <Select value={r.kind} onValueChange={(v) => update(r.key, { kind: v as ShipKind })} disabled={r.printed}>
                       <SelectTrigger aria-label={`${i + 1}행 구분`}>
                         <SelectValue />
                       </SelectTrigger>
@@ -193,13 +211,14 @@ export default function ShipmentEntryPage() {
                     </Select>
                   </TableCell>
                   <TableCell>
-                    <Input aria-label={`${i + 1}행 부수`} type="number" min={0} value={r.qty} onChange={(e) => update(r.key, { qty: Number(e.target.value) })} />
+                    <Input aria-label={`${i + 1}행 부수`} type="number" min={0} value={r.qty} onChange={(e) => update(r.key, { qty: Number(e.target.value) })} disabled={r.printed} />
                   </TableCell>
                   <TableCell>
                     <Button
                       size="icon"
                       variant="ghost"
                       aria-label={`${i + 1}행 삭제`}
+                      disabled={r.printed}
                       onClick={() => {
                         setDirty(true)
                         setRows((rs) => (rs.length > 1 ? rs.filter((x) => x.key !== r.key) : [newRow()]))
@@ -221,6 +240,9 @@ export default function ShipmentEntryPage() {
               </TableRow>
             </TableFooter>
           </Table>
+          {rows.some((r) => r.printed) && (
+            <p className="text-xs text-muted-foreground">인쇄된 행은 수정·삭제할 수 없습니다. 추가분은 [+ 행 추가]로 입력하세요.</p>
+          )}
           <div className="flex items-center gap-2">
             <Button
               variant="outline"

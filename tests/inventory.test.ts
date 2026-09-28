@@ -59,21 +59,47 @@ describe('출고', () => {
     saveShipment(db, { date: D, publisher_id: p1, bookstore_id: s1, items: [{ ...item(b1, 20), id: first.id }] })
     expect(getShipment(db, D, p1, s1)!.items[0]).toMatchObject({ list_price: 20000, qty: 20 })
   })
-  it('인쇄된 행은 재저장해도 인쇄 상태를 유지하고 새 행만 미인쇄', () => {
+  it('인쇄된 행을 그대로 두고 재저장하면 새 행만 미인쇄로 남는다', () => {
     const { db, p1, s1, b1, b2 } = seed()
     saveShipment(db, { date: D, publisher_id: p1, bookstore_id: s1, items: [item(b1)] })
     const first = getShipment(db, D, p1, s1)!.items[0]
     markPrinted(db, [first.id], '2026-09-28T10:00:00.000Z')
-    saveShipment(db, { date: D, publisher_id: p1, bookstore_id: s1, items: [{ ...item(b1, 40), id: first.id }, item(b2)] })
+    saveShipment(db, { date: D, publisher_id: p1, bookstore_id: s1, items: [{ ...item(b1), id: first.id }, item(b2)] })
     expect(listUnprinted(db, D, p1, s1).map((i) => i.book_id)).toEqual([b2])
   })
-  it('인쇄된 행의 도서를 바꾸면 다시 미인쇄가 된다', () => {
+  it('인쇄된 행의 부수를 바꾸면 거절한다', () => {
+    const { db, p1, s1, b1 } = seed()
+    saveShipment(db, { date: D, publisher_id: p1, bookstore_id: s1, items: [item(b1)] })
+    const first = getShipment(db, D, p1, s1)!.items[0]
+    markPrinted(db, [first.id], '2026-09-28T10:00:00.000Z')
+    expect(() =>
+      saveShipment(db, { date: D, publisher_id: p1, bookstore_id: s1, items: [{ ...item(b1, 999), id: first.id }] }),
+    ).toThrow('이미 인쇄된 행은 수정할 수 없습니다')
+  })
+  it('인쇄된 행의 도서를 바꾸면 거절한다', () => {
     const { db, p1, s1, b1, b2 } = seed()
     saveShipment(db, { date: D, publisher_id: p1, bookstore_id: s1, items: [item(b1)] })
     const first = getShipment(db, D, p1, s1)!.items[0]
     markPrinted(db, [first.id], '2026-09-28T10:00:00.000Z')
-    saveShipment(db, { date: D, publisher_id: p1, bookstore_id: s1, items: [{ ...item(b2), id: first.id }] })
-    expect(listUnprinted(db, D, p1, s1)).toMatchObject([{ book_id: b2, list_price: 15000 }])
+    expect(() =>
+      saveShipment(db, { date: D, publisher_id: p1, bookstore_id: s1, items: [{ ...item(b2), id: first.id }] }),
+    ).toThrow('이미 인쇄된 행은 수정할 수 없습니다')
+  })
+  it('인쇄된 행을 입력에서 빼면(삭제 시도) 거절한다', () => {
+    const { db, p1, s1, b1, b2 } = seed()
+    saveShipment(db, { date: D, publisher_id: p1, bookstore_id: s1, items: [item(b1), item(b2)] })
+    const [first] = getShipment(db, D, p1, s1)!.items
+    markPrinted(db, [first.id], '2026-09-28T10:00:00.000Z')
+    expect(() =>
+      saveShipment(db, { date: D, publisher_id: p1, bookstore_id: s1, items: [item(b2)] }),
+    ).toThrow('삭제할 수 없습니다')
+  })
+  it('인쇄된 행이 있는 출고는 삭제할 수 없다', () => {
+    const { db, p1, s1, b1 } = seed()
+    const { id } = saveShipment(db, { date: D, publisher_id: p1, bookstore_id: s1, items: [item(b1)] })
+    const first = getShipment(db, D, p1, s1)!.items[0]
+    markPrinted(db, [first.id], '2026-09-28T10:00:00.000Z')
+    expect(() => deleteShipment(db, id)).toThrow('이미 인쇄된 명세가 있어 삭제할 수 없습니다')
   })
   it('입력에서 빠진 행은 삭제한다', () => {
     const { db, p1, s1, b1, b2 } = seed()
@@ -86,10 +112,18 @@ describe('출고', () => {
     const { db, p1, s1, b1, b3 } = seed()
     const base = { date: D, publisher_id: p1, bookstore_id: s1 }
     expect(() => saveShipment(db, { ...base, items: [] })).toThrow('1권 이상')
-    expect(() => saveShipment(db, { ...base, items: [item(b1, 0)] })).toThrow('1행 부수')
+    expect(() => saveShipment(db, { ...base, items: [item(b1, 0)] })).toThrow('1행: 부수')
     expect(() => saveShipment(db, { ...base, items: [item(b1), item(b1, 5, 0)] })).toThrow('2행: 출고율')
     expect(() => saveShipment(db, { ...base, items: [item(b3)] })).toThrow('선택한 출판사의 도서가 아닙니다')
     expect(() => saveShipment(db, { ...base, bookstore_id: null, items: [item(b1)] })).toThrow('서점')
+  })
+  it('도서를 선택하지 않으면 행 번호와 함께 거절한다', () => {
+    const { db, p1, s1 } = seed()
+    const base = { date: D, publisher_id: p1, bookstore_id: s1 }
+    expect(() => saveShipment(db, { ...base, items: [{ book_id: null, rate: 60, kind: '위탁' as const, qty: 10 }] })).toThrow('1행')
+    expect(() => saveShipment(db, { ...base, items: [{ book_id: null, rate: 60, kind: '위탁' as const, qty: 10 }] })).toThrow(
+      '도서를 선택하세요',
+    )
   })
   it('재고가 음수가 되면 경고를 돌려주되 저장은 한다', () => {
     const { db, p1, s1, b1 } = seed()

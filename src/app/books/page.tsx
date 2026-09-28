@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useQuery } from '@/hooks/use-query'
 import { createBook, deleteBook, listBooks, listPublishers, updateBook } from '@/lib/actions/master'
 import { won } from '@/lib/format'
+import { josa } from '@/lib/josa'
 import { pubOptions } from '@/lib/options'
 import type { Book, Publisher } from '@/lib/repo/master'
 
@@ -29,7 +30,10 @@ export default function BooksPage() {
   }, [pubs.data, pubId])
 
   const books = useQuery(() => listBooks(pubId ?? undefined), [pubId], [] as Book[])
-  const rows = useMemo(() => books.data.filter((b) => b.name.includes(keyword) || b.code.includes(keyword)), [books.data, keyword])
+  const rows = useMemo(() => {
+    const kw = keyword.toLowerCase()
+    return books.data.filter((b) => b.name.toLowerCase().includes(kw) || b.code.toLowerCase().includes(kw))
+  }, [books.data, keyword])
 
   const [form, setForm] = useState<Form | null>(null)
   const [error, setError] = useState('')
@@ -49,7 +53,7 @@ export default function BooksPage() {
     books.reload()
   }
   async function remove(b: Book) {
-    if (!confirm(`'${b.name}'을(를) 삭제할까요?`)) return
+    if (!confirm(`'${b.name}'${josa(b.name, '을', '를')} 삭제할까요?`)) return
     const r = await deleteBook(b.id)
     if (!r.ok) return toast.error(r.error)
     books.reload()

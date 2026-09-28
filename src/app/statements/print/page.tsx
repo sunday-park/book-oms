@@ -18,14 +18,14 @@ import type { ShipmentItem } from '@/lib/repo/inventory'
 import type { Bookstore, Publisher } from '@/lib/repo/master'
 
 export default function StatementPrintPage() {
-  const [date] = useState(today)
+  const [date, setDate] = useState(today)
   const [pubId, setPubId] = useState<number | null>(null)
   const [storeId, setStoreId] = useState<number | null>(null)
   const pubs = useQuery(listPublishers, [], [] as Publisher[])
   const stores = useQuery(listBookstores, [], [] as Bookstore[])
   const items = useQuery(
     () => (pubId && storeId ? listUnprinted(date, pubId, storeId) : none([] as ShipmentItem[])),
-    [pubId, storeId],
+    [date, pubId, storeId],
     [] as ShipmentItem[],
   )
   const pub = pubs.data.find((p) => p.id === pubId)
@@ -48,13 +48,14 @@ export default function StatementPrintPage() {
       </PageHeader>
       <SearchBar
         onReset={() => {
+          setDate(today())
           setPubId(null)
           setStoreId(null)
         }}
         onSearch={items.reload}
       >
-        <Field label="날짜 (오늘)">
-          <Input className="w-40" value={date} disabled />
+        <Field label="날짜">
+          <Input type="date" className="w-40" value={date} onChange={(e) => setDate(e.target.value)} />
         </Field>
         <Field label="출판사">
           <EntityCombobox label="출판사" options={pubOptions(pubs.data)} value={pubId} onChange={setPubId} />

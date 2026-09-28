@@ -25,7 +25,10 @@ export default function StockStatusPage() {
   }, [pubs.data, pubId])
 
   const stock = useQuery(() => (pubId ? listStock(pubId) : none([] as StockRow[])), [pubId], [] as StockRow[])
-  const rows = useMemo(() => stock.data.filter((r) => r.name.includes(keyword) || r.code.includes(keyword)), [stock.data, keyword])
+  const rows = useMemo(() => {
+    const kw = keyword.toLowerCase()
+    return stock.data.filter((r) => r.name.toLowerCase().includes(kw) || r.code.toLowerCase().includes(kw))
+  }, [stock.data, keyword])
 
   return (
     <>

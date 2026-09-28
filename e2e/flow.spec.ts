@@ -111,22 +111,39 @@ test('출판사 → 서점 → 도서 → 입고 → 출고 → 반품 → 현�
   await expect(page.getByText('교보문고 광화문')).toBeVisible()
   await expect(page.getByRole('row', { name: /리액트 입문/ })).toContainText('30')
 
-  // 저장 + 인쇄된 명세서를 다시 조회했을 때 그대로 불러와지는지, 그리고
-  // 저장하지 않은 변경 내용이 있을 때 조회 조건을 바꾸면 가드(confirm)가 막아주는지 확인한다.
+  // 저장 + 인쇄된 명세서를 다시 조회했을 때 그대로 불러와지는지, 인쇄된 행은 잠겨 있는지,
+  // 그리고 저장하지 않은 변경 내용이 있을 때 조회 조건을 바꾸면 가드(confirm)가 막아주는지 확인한다.
   await page.goto('/statements/entry')
   await pick(page, page, '출판사', '한빛')
   await pick(page, page, '서점', '교보')
   await expect(page.getByLabel('1행 부수')).toHaveValue('30')
   await expect(page.getByText('인쇄됨')).toBeVisible()
+  await expect(page.getByLabel('1행 부수')).toBeDisabled()
 
-  await page.getByLabel('1행 부수').fill('31')
+  await page.getByRole('button', { name: '+ 행 추가' }).click()
+  await pick(page, page, '2행 도서', '리액트')
+  await page.getByLabel('2행 부수').fill('5')
+
   page.off('dialog', acceptDialog)
   page.once('dialog', (d) => d.dismiss())
   await pick(page, page, '서점', '알라딘')
   page.on('dialog', acceptDialog)
 
   await expect(page.getByRole('combobox', { name: '서점' })).toHaveText(/교보/)
-  await expect(page.getByLabel('1행 부수')).toHaveValue('31')
+  await expect(page.getByLabel('2행 부수')).toHaveValue('5')
+  await expect(page.getByLabel('1행 부수')).toBeDisabled()
+
+  await page.getByRole('button', { name: '저장' }).click()
+  await expect(page.getByText('저장했습니다.')).toBeVisible()
+
+  // 재출력 시 추가분만 표시(spec §7): 이미 인쇄된 1행은 빠지고 새로 추가한 행만 나온다
+  await page.goto('/statements/print')
+  await pick(page, page, '출판사', '한빛')
+  await pick(page, page, '서점', '교보')
+  const printRows = page.locator('tbody tr')
+  await expect(printRows).toHaveCount(1)
+  await expect(printRows.first()).toContainText('리액트 입문')
+  await expect(printRows.first()).toContainText('5')
 
   errors.assertClean()
 })
