@@ -16,13 +16,24 @@ export function ColHead({ className, children, ...props }: ComponentProps<'th'>)
   )
 }
 
-/** 클릭하면 선택되는 행 */
+/** 클릭하거나 포커스 후 Enter/Space 로 선택되는 행 */
 export function SelectableRow({ selected, onSelect, className, ...props }: ComponentProps<'tr'> & { selected: boolean; onSelect: () => void }) {
   return (
     <TableRow
       data-state={selected ? 'selected' : undefined}
+      aria-selected={selected}
+      tabIndex={0}
       onClick={onSelect}
-      className={cn('cursor-pointer hover:bg-slate-50 data-[state=selected]:bg-[#e6edfb] data-[state=selected]:hover:bg-[#e6edfb]', className)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onSelect()
+        }
+      }}
+      className={cn(
+        'cursor-pointer outline-none hover:bg-slate-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring data-[state=selected]:bg-[#e6edfb] data-[state=selected]:hover:bg-[#e6edfb]',
+        className,
+      )}
       {...props}
     />
   )

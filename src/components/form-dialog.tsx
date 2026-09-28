@@ -22,12 +22,14 @@ export function FormDialog({ open, title, error, onClose, onSave, onDelete, chil
         </DialogHeader>
         <div className="grid gap-3">{children}</div>
         <DialogFooter className="items-center gap-2">
-          {onDelete && (
-            <Button variant="outline" className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 sm:mr-auto" onClick={onDelete}>
-              삭제
-            </Button>
-          )}
-          {error && <p className="mr-auto text-sm text-destructive">{error}</p>}
+          <div className="mr-auto flex items-center gap-2">
+            {onDelete && (
+              <Button variant="outline" className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700" onClick={onDelete}>
+                삭제
+              </Button>
+            )}
+            {error && <p className="text-sm text-destructive">{error}</p>}
+          </div>
           <Button variant="outline" onClick={onClose}>취소</Button>
           <Button onClick={onSave}>저장</Button>
         </DialogFooter>

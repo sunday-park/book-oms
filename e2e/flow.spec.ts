@@ -73,6 +73,14 @@ test('출판사 → 서점 → 도서 → 입고 → 출고 → 반품 → 현�
   await dlg.getByRole('button', { name: '저장' }).click()
   await expect(page.getByRole('cell', { name: 'P01-0001' })).toBeVisible()
 
+  // 키보드로도 행 선택 가능: 포커스 후 Enter → [수정] 활성
+  await expect(page.getByRole('button', { name: '수정' })).toBeDisabled()
+  const bookRow = page.getByRole('row', { name: /리액트 입문/ })
+  await bookRow.focus()
+  await page.keyboard.press('Enter')
+  await expect(bookRow).toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByRole('button', { name: '수정' })).toBeEnabled()
+
   await page.goto('/receipts')
   await page.getByRole('button', { name: '등록', exact: true }).click()
   await pick(page, dlg, '출판사', '한빛')
