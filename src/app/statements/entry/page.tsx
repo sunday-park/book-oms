@@ -1,7 +1,7 @@
 'use client'
 
 import { Trash2 } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { EntityCombobox } from '@/components/entity-combobox'
 import { PageHeader } from '@/components/page-header'
@@ -39,6 +39,8 @@ export default function ShipmentEntryPage() {
   const [shipmentId, setShipmentId] = useState<number | null>(null)
   const [rows, setRows] = useState<Row[]>(() => [newRow()])
   const [error, setError] = useState('')
+  const [dirty, setDirty] = useState(false)
+  const reqRef = useRef(0)
   const pubs = useQuery(listPublishers, [], [] as Publisher[])
   const stores = useQuery(listBookstores, [], [] as Bookstore[])
   const books = useQuery(() => (pubId ? listBooks(pubId) : none([] as Book[])), [pubId], [] as Book[])
@@ -46,13 +48,16 @@ export default function ShipmentEntryPage() {
 
   // 같은 날짜·출판사·서점 출고가 있으면 불러와 이어서 편집
   const load = useCallback(async () => {
+    const seq = ++reqRef.current
     setError('')
     if (!pubId || !storeId) {
       setShipmentId(null)
       setRows([newRow()])
+      setDirty(false)
       return
     }
     const r = await getShipment(date, pubId, storeId)
+    if (seq !== reqRef.current) return // 이후 요청이 이미 시작됨 — 이 결과는 버림
     if (!r.ok) return void toast.error(r.error)
     setShipmentId(r.data?.id ?? null)
     setRows(
@@ -69,6 +74,7 @@ export default function ShipmentEntryPage() {
           }))
         : [newRow()],
     )
+    setDirty(false)
   }, [date, pubId, storeId])
   useEffect(() => {
     void load()
@@ -84,7 +90,15 @@ export default function ShipmentEntryPage() {
   })
   const totalQty = rows.reduce((s, r) => s + r.qty, 0)
   const totalAmount = calc.reduce((s, c) => s + c.amount, 0)
-  const update = (key: string, patch: Partial<Row>) => setRows((rs) => rs.map((r) => (r.key === key ? { ...r, ...patch } : r)))
+  const update = (key: string, patch: Partial<Row>) => {
+    setDirty(true)
+    setError('')
+    setRows((rs) => rs.map((r) => (r.key === key ? { ...r, ...patch } : r)))
+  }
+  // 편집 중 내용이 있으면 조회 조건 변경 전에 확인
+  const guard = (fn: () => void) => {
+    if (!dirty || confirm('저장하지 않은 변경 내용이 있습니다. 버리고 계속할까요?')) fn()
+  }
 
   async function save() {
     const r = await saveShipment({
@@ -111,21 +125,23 @@ export default function ShipmentEntryPage() {
     <>
       <PageHeader title="출고 입력" />
       <SearchBar
-        onReset={() => {
-          setDate(today())
-          setPubId(null)
-          setStoreId(null)
-        }}
-        onSearch={load}
+        onReset={() =>
+          guard(() => {
+            setDate(today())
+            setPubId(null)
+            setStoreId(null)
+          })
+        }
+        onSearch={() => guard(load)}
       >
         <Field label="날짜">
-          <Input type="date" className="w-40" value={date} onChange={(e) => setDate(e.target.value)} />
+          <Input type="date" className="w-40" value={date} onChange={(e) => guard(() => setDate(e.target.value))} />
         </Field>
         <Field label="출판사">
-          <EntityCombobox label="출판사" options={pubOptions(pubs.data)} value={pubId} onChange={setPubId} />
+          <EntityCombobox label="출판사" options={pubOptions(pubs.data)} value={pubId} onChange={(v) => guard(() => setPubId(v))} />
         </Field>
         <Field label="서점">
-          <EntityCombobox label="서점" options={storeOptions(stores.data)} value={storeId} onChange={setStoreId} />
+          <EntityCombobox label="서점" options={storeOptions(stores.data)} value={storeId} onChange={(v) => guard(() => setStoreId(v))} />
         </Field>
       </SearchBar>
       {!pubId || !storeId ? (
@@ -184,7 +200,10 @@ export default function ShipmentEntryPage() {
                       size="icon"
                       variant="ghost"
                       aria-label={`${i + 1}행 삭제`}
-                      onClick={() => setRows((rs) => (rs.length > 1 ? rs.filter((x) => x.key !== r.key) : [newRow()]))}
+                      onClick={() => {
+                        setDirty(true)
+                        setRows((rs) => (rs.length > 1 ? rs.filter((x) => x.key !== r.key) : [newRow()]))
+                      }}
                     >
                       <Trash2 className="size-4" />
                     </Button>
@@ -203,10 +222,18 @@ export default function ShipmentEntryPage() {
             </TableFooter>
           </Table>
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => setRows((rs) => [...rs, newRow()])}>+ 행 추가</Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDirty(true)
+                setRows((rs) => [...rs, newRow()])
+              }}
+            >
+              + 행 추가
+            </Button>
             <div className="ml-auto flex items-center gap-2">
               {error && <p className="text-sm text-destructive">{error}</p>}
-              <Button variant="outline" onClick={load}>취소</Button>
+              <Button variant="outline" onClick={() => guard(load)}>취소</Button>
               <Button variant="outline" className="text-destructive" onClick={remove}>삭제</Button>
               <Button onClick={save}>저장</Button>
             </div>
