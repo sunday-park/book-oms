@@ -17,8 +17,7 @@ function trackErrors(page: import('@playwright/test').Page) {
   return {
     assertClean() {
       expect(pageErrors).toEqual([])
-      const realErrors = consoleErrors.filter((e) => !/404/.test(e))
-      expect(realErrors).toEqual([])
+      expect(consoleErrors).toEqual([])
     },
   }
 }

@@ -19,8 +19,7 @@ test('레이아웃(사이드바) 스모크: 콘솔/페이지 에러 없이 메�
   const requestUrls: string[] = []
   page.on('request', (req) => requestUrls.push(req.url()))
 
-  // '/' 는 '/books' 로 redirect 되는데 화면 라우트는 Task 5-9 에서 만들어지므로
-  // 지금은 404 로 떨어진다. 그래도 루트 레이아웃(사이드바)은 not-found 화면에도 함께 렌더된다.
+  // '/' 는 '/books' 로 redirect 된다.
   await page.goto('/')
 
   const sidebar = page.locator('aside')
@@ -32,10 +31,7 @@ test('레이아웃(사이드바) 스모크: 콘솔/페이지 에러 없이 메�
   }
 
   expect(pageErrors).toEqual([])
-
-  // 화면 라우트(/books 등)가 아직 없어 404 리소스 로드 실패의 콘솔 에러는 이 태스크 범위가 아니므로 무시한다.
-  const realErrors = consoleErrors.filter((e) => !/404/.test(e))
-  expect(realErrors).toEqual([])
+  expect(consoleErrors).toEqual([])
 
   // 오프라인 제약 확인: 외부 호스트로 나가는 요청이 없어야 한다 (예: Google Fonts 등)
   for (const url of requestUrls) {
