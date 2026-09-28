@@ -1,0 +1,44 @@
+import { expect, test } from '@playwright/test'
+
+const GROUP_TITLES = ['관리', '현황', '명세서']
+const MENU_LABELS = [
+  '도서 관리', '서점 관리', '출판사 관리', '입고 관리', '반품 관리',
+  '출고 현황', '재고 현황',
+  '출고 입력', '명세서 출력', '재고 원장', '출고증',
+]
+
+test('레이아웃(사이드바) 스모크: 콘솔/페이지 에러 없이 메뉴가 모두 보인다', async ({ page }) => {
+  const pageErrors: Error[] = []
+  const consoleErrors: string[] = []
+
+  page.on('pageerror', (err) => pageErrors.push(err))
+  page.on('console', (msg) => {
+    if (msg.type() === 'error') consoleErrors.push(msg.text())
+  })
+
+  const requestUrls: string[] = []
+  page.on('request', (req) => requestUrls.push(req.url()))
+
+  // '/' 는 '/books' 로 redirect 되는데 화면 라우트는 Task 5-9 에서 만들어지므로
+  // 지금은 404 로 떨어진다. 그래도 루트 레이아웃(사이드바)은 not-found 화면에도 함께 렌더된다.
+  await page.goto('/')
+
+  const sidebar = page.locator('aside')
+  for (const title of GROUP_TITLES) {
+    await expect(sidebar.getByText(title, { exact: true })).toBeVisible()
+  }
+  for (const label of MENU_LABELS) {
+    await expect(sidebar.getByRole('link', { name: label, exact: true })).toBeVisible()
+  }
+
+  expect(pageErrors).toEqual([])
+
+  // 화면 라우트(/books 등)가 아직 없어 404 리소스 로드 실패의 콘솔 에러는 이 태스크 범위가 아니므로 무시한다.
+  const realErrors = consoleErrors.filter((e) => !/404/.test(e))
+  expect(realErrors).toEqual([])
+
+  // 오프라인 제약 확인: 외부 호스트로 나가는 요청이 없어야 한다 (예: Google Fonts 등)
+  for (const url of requestUrls) {
+    expect(url.startsWith('http://localhost:3100')).toBe(true)
+  }
+})
