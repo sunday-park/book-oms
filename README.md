@@ -1,36 +1,41 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Book OMS — 도서 재고 관리
 
-## Getting Started
+출판사 › 도서 › 일자별 재고를 관리하는 **완전 오프라인** 로컬 프로그램입니다.
+서버·인터넷 연결 없이 `npm run dev` 한 번으로 동작하며, 데이터는 PC 안의 SQLite 파일(`data/book-oms.db`)에 저장됩니다.
 
-First, run the development server:
+## 주요 기능
+
+| 메뉴 | 화면 |
+|---|---|
+| 관리 | 도서(출판사별 코드 자동 부여) · 서점 · 출판사 · 입고 · 반품 |
+| 현황 | 출고 현황(날짜별) · 재고 현황(입고 − 출고 + 반품) |
+| 명세서 | 출고 입력 · 명세서 출력(추가분만 인쇄) · 재고 원장 · 출고증 |
+
+- 도서·서점·출판사 자동완성 검색, 모든 검색 영역에 [초기화]·[조회]
+- 출고 단가·금액 자동 계산 (단가 = 정가 × 출고율, 금액 = 단가 × 부수)
+- 브라우저 인쇄로 명세서·원장·출고증 출력 (PDF 저장 가능)
+
+기술 스택: Next.js 15 · TypeScript · Tailwind CSS · shadcn/ui · Node 내장 SQLite(`node:sqlite`)
+
+## 다운로드 · 실행
+
+**필요:** [Node.js](https://nodejs.org) 22.5 이상 (24 권장)
 
 ```bash
+git clone https://github.com/sunday-park/book-oms.git
+cd book-oms
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+브라우저에서 <http://127.0.0.1:3000> 접속. (Git이 없으면 GitHub의 **Code › Download ZIP**으로 받아 압축을 풀고 같은 폴더에서 `npm install` → `npm run dev`)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- 최초 실행 시 `data/book-oms.db`가 자동 생성됩니다. **백업은 이 파일을 복사**하면 됩니다.
+- 설치(`npm install`)에만 인터넷이 필요하고, 이후에는 오프라인으로 동작합니다.
+- 테스트: `npm test`(단위) · `npm run e2e`(브라우저)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 릴리즈 이력
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| 버전 | 날짜 | 내용 |
+|---|---|---|
+| v0.1.0 | 2026-09-28 | 최초 공개 — 관리·현황·명세서 11개 화면, 로컬 SQLite 저장 |

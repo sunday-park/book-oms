@@ -47,3 +47,6 @@ next-env.d.ts
 
 # local sqlite data
 /data
+
+# internal docs
+docs/superpowers/
