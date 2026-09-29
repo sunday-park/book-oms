@@ -1,4 +1,5 @@
 import {
+  ArchiveRestore,
   BookCopy,
   BookOpen,
   Boxes,
@@ -9,8 +10,7 @@ import {
   Package,
   Printer,
   Store,
-  TrendingDown,
-  Undo2,
+  Truck,
 } from 'lucide-react'
 import type { Tone } from '@/components/status'
 
@@ -57,7 +57,7 @@ export const NAV: { title: string; groups: NavItem[][] }[] = [
         {
           href: '/returns',
           label: '반품 관리',
-          icon: Undo2,
+          icon: ArchiveRestore,
           tone: 'return',
           desc: '서점에서 돌아온 반품 내역을 관리합니다.',
           help: ['기간·출판사·서점으로 반품 내역을 조회합니다.', '[+ 등록]으로 반품을 추가하면 재고에 더해집니다.', '행을 선택한 뒤 [삭제]로 잘못 입력한 반품을 지웁니다.'],
@@ -71,7 +71,7 @@ export const NAV: { title: string; groups: NavItem[][] }[] = [
       {
         href: '/status/shipments',
         label: '출고 현황',
-        icon: TrendingDown,
+        icon: Truck,
         tone: 'ship',
         desc: '날짜별 서점 출고 내역을 조회합니다.',
         help: ['날짜를 고르면 그날의 출고 내역이 표시됩니다.', '출판사·서점으로 범위를 좁힐 수 있습니다.'],
