@@ -71,7 +71,12 @@ CREATE TABLE IF NOT EXISTS returns (
 export function openDb(file: string): DB {
   if (file !== ':memory:') fs.mkdirSync(path.dirname(file), { recursive: true })
   const db = new sqlite.DatabaseSync(file)
-  db.exec(SCHEMA)
+  try {
+    db.exec(SCHEMA)
+  } catch (e) {
+    db.close() // SQLite 파일이 아니면 파일을 잡은 채로 두지 않는다 (Windows 파일 잠금)
+    throw e
+  }
   // 새 DB(version 0)면 현재 스키마 버전으로 표시해둔다 — 이후 마이그레이션이 필요해지면 이 값으로 분기한다
   const { user_version: version } = db.prepare('PRAGMA user_version').get() as { user_version: number }
   if (version === 0) db.exec('PRAGMA user_version = 1')
@@ -81,9 +86,18 @@ export function openDb(file: string): DB {
 // dev 서버 HMR 때 연결이 여러 개 생기지 않도록 전역에 보관
 const g = globalThis as unknown as { __bookOmsDb?: DB }
 
+/** 앱이 쓰는 DB 파일의 절대 경로 */
+export const dbPath = () => path.resolve(process.env.BOOK_OMS_DB ?? 'data/book-oms.db')
+
 export function getDb(): DB {
-  g.__bookOmsDb ??= openDb(path.resolve(process.env.BOOK_OMS_DB ?? 'data/book-oms.db'))
+  g.__bookOmsDb ??= openDb(dbPath())
   return g.__bookOmsDb
+}
+
+/** 캐시된 연결을 닫는다 (복원으로 파일을 바꾸기 전). 다음 getDb() 가 새로 연다. */
+export function closeDb() {
+  g.__bookOmsDb?.close()
+  g.__bookOmsDb = undefined
 }
 
 // node:sqlite 행은 null-prototype 객체라 React 직렬화가 거부한다 → 평범한 객체로 복사

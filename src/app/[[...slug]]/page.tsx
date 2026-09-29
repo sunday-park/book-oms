@@ -3,13 +3,14 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import type { ComponentType } from 'react'
-import { NAV } from '@/components/nav'
+import { FOOTER_NAV, NAV } from '@/components/nav'
 import { PageHeader } from '@/components/page-header'
 import Books from '@/views/books'
 import Bookstores from '@/views/bookstores'
 import Publishers from '@/views/publishers'
 import Receipts from '@/views/receipts'
 import Returns from '@/views/returns'
+import Settings from '@/views/settings'
 import StatementsDispatch from '@/views/statements-dispatch'
 import StatementsEntry from '@/views/statements-entry'
 import StatementsLedger from '@/views/statements-ledger'
@@ -30,8 +31,9 @@ const COMPONENTS: Record<string, ComponentType> = {
   '/statements/print': StatementsPrint,
   '/statements/ledger': StatementsLedger,
   '/statements/dispatch': StatementsDispatch,
+  '/settings': Settings,
 }
-const VIEWS = new Map(NAV.flatMap((s) => s.groups.flat()).map((it) => [it.href, COMPONENTS[it.href]] as const))
+const VIEWS = new Map([...NAV.flatMap((s) => s.groups.flat()), FOOTER_NAV.item].map((it) => [it.href, COMPONENTS[it.href]] as const))
 
 export default function Page() {
   const pathname = usePathname()

@@ -3,17 +3,28 @@
 import { BookOpen, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useEffect, useState } from 'react'
-import { NAV } from '@/components/nav'
+import { type MouseEvent, useEffect, useState } from 'react'
+import { FOOTER_NAV, NAV } from '@/components/nav'
 import { buttonVariants } from '@/components/ui/button'
 import { hasUnsaved } from '@/lib/unsaved'
 import { cn } from '@/lib/utils'
 
 const STORAGE_KEY = 'book-oms:sidebar-collapsed'
 
+/** 메뉴 링크 클릭: 서버 요청 없이 주소만 바꾸면 화면 전환은 [[...slug]] 페이지가 처리한다 */
+function navigate(e: MouseEvent, href: string, pathname: string) {
+  // 새 탭 열기(휠 클릭·Ctrl/Shift 클릭)는 브라우저 기본 동작에 맡긴다
+  if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+  e.preventDefault()
+  if (hasUnsaved() && !confirm('저장하지 않은 변경 내용이 있습니다. 버리고 이동할까요?')) return
+  if (href !== pathname) window.history.pushState(null, '', href)
+}
+
 export function AppSidebar() {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
+  const settings = FOOTER_NAV.item
+  const settingsActive = pathname === settings.href
 
   // 접힘 상태는 브라우저에 기억 (저장소를 못 쓰면 펼친 상태로 시작)
   useEffect(() => {
@@ -70,14 +81,7 @@ export function AppSidebar() {
                       aria-current={active ? 'page' : undefined}
                       aria-label={collapsed ? it.label : undefined}
                       title={collapsed ? it.label : undefined}
-                      onClick={(e) => {
-                        // 새 탭 열기(휠 클릭·Ctrl/Shift 클릭)는 브라우저 기본 동작에 맡긴다
-                        if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
-                        e.preventDefault()
-                        if (hasUnsaved() && !confirm('저장하지 않은 변경 내용이 있습니다. 버리고 이동할까요?')) return
-                        // 서버 요청 없이 주소만 바꾸면 화면 전환은 [[...slug]] 페이지가 처리한다
-                        if (it.href !== pathname) window.history.pushState(null, '', it.href)
-                      }}
+                      onClick={(e) => navigate(e, it.href, pathname)}
                       className={cn(
                         'flex h-[clamp(34px,4.4vh,50px)] items-center gap-3 rounded-lg text-lg font-semibold whitespace-nowrap transition-colors',
                         collapsed ? 'mx-auto w-[clamp(34px,4.4vh,50px)] justify-center px-0' : 'px-3.5',
@@ -95,8 +99,24 @@ export function AppSidebar() {
           </div>
         ))}
       </nav>
-      <div className={cn('flex items-center border-t border-sidebar-border py-2', collapsed ? 'justify-center px-0' : 'justify-between pr-2 pl-5')}>
-        {!collapsed && <span className="font-mono text-xs text-sidebar-muted">v1.0.0</span>}
+      <div className={cn('flex items-center border-t border-sidebar-border py-2', collapsed ? 'flex-col gap-1 px-0' : 'gap-2 pr-2 pl-2')}>
+        <Link
+          href={settings.href}
+          prefetch={false}
+          aria-current={settingsActive ? 'page' : undefined}
+          aria-label={collapsed ? settings.label : undefined}
+          title={collapsed ? settings.label : undefined}
+          onClick={(e) => navigate(e, settings.href, pathname)}
+          className={cn(
+            'flex h-9 items-center gap-2 rounded-lg text-base font-semibold transition-colors outline-none focus-visible:ring-3 focus-visible:ring-sidebar-focus',
+            collapsed ? 'w-9 justify-center' : 'px-3',
+            settingsActive ? 'bg-sidebar-primary text-sidebar-primary-foreground' : 'text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+          )}
+        >
+          <settings.icon className="size-[18px] shrink-0" strokeWidth={1.8} />
+          {!collapsed && settings.label}
+        </Link>
+        {!collapsed && <span className="ml-auto font-mono text-xs text-sidebar-muted">v1.0.0</span>}
         <button
           type="button"
           onClick={toggle}

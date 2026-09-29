@@ -9,6 +9,7 @@ import {
   type LucideIcon,
   Package,
   Printer,
+  Settings,
   Store,
   Truck,
 } from 'lucide-react'
@@ -123,7 +124,20 @@ export const NAV: { title: string; groups: NavItem[][] }[] = [
   },
 ]
 
+/** 사이드바 아래쪽(버전·접기 줄)에 따로 두는 메뉴 — 본 메뉴 목록에는 나오지 않는다 */
+export const FOOTER_NAV: { title: string; item: NavItem } = {
+  title: '시스템',
+  item: {
+    href: '/settings',
+    label: '설정',
+    icon: Settings,
+    desc: '로컬 데이터베이스 위치와 백업을 관리합니다.',
+    help: ['[지금 백업]으로 현재 데이터를 백업 폴더에 저장합니다.', '[복원]은 현재 데이터를 선택한 백업으로 바꿉니다. 복원 직전 데이터는 자동으로 백업됩니다.', '[폴더 열기]로 DB 파일 위치를 탐색기에서 엽니다.'],
+  },
+}
+
 export function findNav(pathname: string) {
   for (const s of NAV) for (const g of s.groups) for (const it of g) if (it.href === pathname) return { section: s.title, item: it }
+  if (FOOTER_NAV.item.href === pathname) return { section: FOOTER_NAV.title, item: FOOTER_NAV.item }
   return undefined
 }

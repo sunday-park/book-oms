@@ -8,6 +8,8 @@ export const none = <T,>(data: T): Promise<Result<T>> => Promise.resolve({ ok: t
 
 // 마지막으로 받은 조회 결과 (화면을 다시 열면 이걸 먼저 보여주고 뒤에서 새로 조회)
 const cache = new Map<string, unknown>()
+/** 저장해 둔 조회 결과를 모두 버린다 (DB 복원 뒤) */
+export const clearQueryCache = () => cache.clear()
 
 /**
  * 첫 조회는 즉시, 이후 deps 가 바뀌면 150ms 뒤 자동 조회(입력 즉시 필터링), reload() 는 [조회] 버튼용 즉시 조회.
