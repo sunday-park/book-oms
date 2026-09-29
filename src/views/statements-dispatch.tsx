@@ -19,12 +19,12 @@ import type { DispatchGroup } from '@/lib/repo/reports'
 
 export default function DispatchPage() {
   const [date, setDate] = useState(today)
-  const pubs = useQuery(listPublishers, [], [] as Publisher[])
+  const pubs = useQuery(listPublishers, [], [] as Publisher[], 'publishers')
   const [pubId, setPubId] = useState<number | null>(null)
   useEffect(() => {
     if (pubId === null && pubs.data.length) setPubId(pubs.data[0].id)
   }, [pubs.data, pubId])
-  const groups = useQuery(() => (pubId ? listDispatch(date, pubId) : none([] as DispatchGroup[])), [date, pubId], [] as DispatchGroup[])
+  const groups = useQuery(() => (pubId ? listDispatch(date, pubId) : none([] as DispatchGroup[])), [date, pubId], [] as DispatchGroup[], 'dispatch')
   const pub = pubs.data.find((p) => p.id === pubId)
   const grand = groups.data.reduce((s, g) => s + g.total, 0)
 

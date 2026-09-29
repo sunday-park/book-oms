@@ -19,7 +19,7 @@ const EMPTY: PublisherInput = { code: '', name: '', phone: '', fax: '', biz_no: 
 
 export default function PublishersPage() {
   const [keyword, setKeyword] = useState('')
-  const { data, reload } = useQuery(listPublishers, [], [] as Publisher[])
+  const { data, reload } = useQuery(listPublishers, [], [] as Publisher[], 'publishers')
   const rows = useMemo(() => {
     const kw = keyword.toLowerCase()
     return data.filter((p) => p.name.toLowerCase().includes(kw) || p.code.toLowerCase().includes(kw))

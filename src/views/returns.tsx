@@ -24,12 +24,13 @@ type Form = { date: string; publisher_id: number | null; bookstore_id: number | 
 
 export default function ReturnsPage() {
   const [f, setF] = useState(initFilter)
-  const pubs = useQuery(listPublishers, [], [] as Publisher[])
-  const stores = useQuery(listBookstores, [], [] as Bookstore[])
+  const pubs = useQuery(listPublishers, [], [] as Publisher[], 'publishers')
+  const stores = useQuery(listBookstores, [], [] as Bookstore[], 'bookstores')
   const list = useQuery(
     () => listReturns({ from: f.from, to: f.to, publisherId: f.pubId ?? undefined, bookstoreId: f.storeId ?? undefined }),
     [f],
     [] as ReturnRow[],
+    'returns',
   )
   const total = useMemo(() => list.data.reduce((s, r) => s + r.qty, 0), [list.data])
   const [selId, setSelId] = useState<number | null>(null)

@@ -21,7 +21,7 @@ import type { Book, Publisher } from '@/lib/repo/master'
 type Form = { id?: number; publisher_id: number | null; name: string; list_price: number }
 
 export default function BooksPage() {
-  const pubs = useQuery(listPublishers, [], [] as Publisher[])
+  const pubs = useQuery(listPublishers, [], [] as Publisher[], 'publishers')
   // undefined = 아직 첫 출판사로 초기화 전, null = 전체
   const [pubId, setPubId] = useState<number | null | undefined>(undefined)
   const [keyword, setKeyword] = useState('')
@@ -29,7 +29,7 @@ export default function BooksPage() {
     if (pubId === undefined && pubs.data.length) setPubId(pubs.data[0].id)
   }, [pubs.data, pubId])
 
-  const books = useQuery(() => listBooks(pubId ?? undefined), [pubId], [] as Book[])
+  const books = useQuery(() => listBooks(pubId ?? undefined), [pubId], [] as Book[], 'books/list')
   const rows = useMemo(() => {
     const kw = keyword.toLowerCase()
     return books.data.filter((b) => b.name.toLowerCase().includes(kw) || b.code.toLowerCase().includes(kw))

@@ -21,12 +21,13 @@ const initFilter = () => ({ date: today(), pubId: null as number | null, storeId
 
 export default function ShipmentStatusPage() {
   const [f, setF] = useState(initFilter)
-  const pubs = useQuery(listPublishers, [], [] as Publisher[])
-  const stores = useQuery(listBookstores, [], [] as Bookstore[])
+  const pubs = useQuery(listPublishers, [], [] as Publisher[], 'publishers')
+  const stores = useQuery(listBookstores, [], [] as Bookstore[], 'bookstores')
   const list = useQuery(
     () => listShipmentStatus({ date: f.date, publisherId: f.pubId ?? undefined, bookstoreId: f.storeId ?? undefined }),
     [f],
     [] as ShipmentStatusRow[],
+    'shipment-status',
   )
   const total = useMemo(() => list.data.reduce((s, r) => s + r.qty, 0), [list.data])
 

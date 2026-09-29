@@ -54,3 +54,24 @@ test('레이아웃(사이드바) 스모크: 콘솔/페이지 에러 없이 메�
     expect(url.startsWith('http://127.0.0.1:3100')).toBe(true)
   }
 })
+
+test('메뉴 이동은 서버 왕복(_rsc 요청) 없이 화면만 바꾸고, 뒤로 가기로 이전 화면에 돌아간다', async ({ page }) => {
+  await page.goto('/books')
+  await expect(page.getByRole('button', { name: '조회' })).toBeVisible()
+
+  const rscRequests: string[] = []
+  page.on('request', (req) => {
+    if (req.url().includes('_rsc=')) rscRequests.push(req.url())
+  })
+
+  await page.locator('aside').getByRole('link', { name: '출판사 관리', exact: true }).click()
+  await expect(page).toHaveURL(/\/publishers$/)
+  await expect(page.locator('main h1')).toHaveText('출판사 관리')
+  await expect(page.getByRole('navigation', { name: '현재 위치' })).toContainText('출판사 관리')
+  await expect(page.locator('aside').getByRole('link', { name: '출판사 관리', exact: true })).toHaveAttribute('aria-current', 'page')
+  expect(rscRequests).toEqual([])
+
+  await page.goBack()
+  await expect(page).toHaveURL(/\/books$/)
+  await expect(page.locator('main h1')).toHaveText('도서 관리')
+})

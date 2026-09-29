@@ -23,12 +23,13 @@ export default function StatementPrintPage() {
   const [date, setDate] = useState(today)
   const [pubId, setPubId] = useState<number | null>(null)
   const [storeId, setStoreId] = useState<number | null>(null)
-  const pubs = useQuery(listPublishers, [], [] as Publisher[])
-  const stores = useQuery(listBookstores, [], [] as Bookstore[])
+  const pubs = useQuery(listPublishers, [], [] as Publisher[], 'publishers')
+  const stores = useQuery(listBookstores, [], [] as Bookstore[], 'bookstores')
   const items = useQuery(
     () => (pubId && storeId ? listUnprinted(date, pubId, storeId) : none([] as ShipmentItem[])),
     [date, pubId, storeId],
     [] as ShipmentItem[],
+    'unprinted',
   )
   const pub = pubs.data.find((p) => p.id === pubId)
   const store = stores.data.find((s) => s.id === storeId)

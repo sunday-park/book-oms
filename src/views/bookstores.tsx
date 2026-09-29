@@ -23,7 +23,7 @@ const ALL = '__all'
 export default function BookstoresPage() {
   const [keyword, setKeyword] = useState('')
   const [region, setRegion] = useState(ALL)
-  const { data, reload } = useQuery(listBookstores, [], [] as Bookstore[])
+  const { data, reload } = useQuery(listBookstores, [], [] as Bookstore[], 'bookstores')
   const rows = useMemo(() => {
     const kw = keyword.toLowerCase()
     return data.filter((s) => (region === ALL || s.region === region) && (s.name.toLowerCase().includes(kw) || s.code.toLowerCase().includes(kw)))

@@ -44,9 +44,9 @@ export default function ShipmentEntryPage() {
   const [error, setError] = useState('')
   const [dirty, setDirty] = useState(false)
   const reqRef = useRef(0)
-  const pubs = useQuery(listPublishers, [], [] as Publisher[])
-  const stores = useQuery(listBookstores, [], [] as Bookstore[])
-  const books = useQuery(() => (pubId ? listBooks(pubId) : none([] as Book[])), [pubId], [] as Book[])
+  const pubs = useQuery(listPublishers, [], [] as Publisher[], 'publishers')
+  const stores = useQuery(listBookstores, [], [] as Bookstore[], 'bookstores')
+  const books = useQuery(() => (pubId ? listBooks(pubId) : none([] as Book[])), [pubId], [] as Book[], 'entry/books')
   const bookMap = useMemo(() => new Map(books.data.map((b) => [b.id, b])), [books.data])
 
   // 같은 날짜·출판사·서점 출고가 있으면 불러와 이어서 편집

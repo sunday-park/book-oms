@@ -68,11 +68,17 @@ export function AppSidebar() {
                     <Link
                       key={it.href}
                       href={it.href}
+                      prefetch={false}
                       aria-current={active ? 'page' : undefined}
                       aria-label={collapsed ? it.label : undefined}
                       title={collapsed ? it.label : undefined}
                       onClick={(e) => {
-                        if (hasUnsaved() && !confirm('저장하지 않은 변경 내용이 있습니다. 버리고 이동할까요?')) e.preventDefault()
+                        // 새 탭 열기(휠 클릭·Ctrl/Shift 클릭)는 브라우저 기본 동작에 맡긴다
+                        if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+                        e.preventDefault()
+                        if (hasUnsaved() && !confirm('저장하지 않은 변경 내용이 있습니다. 버리고 이동할까요?')) return
+                        // 서버 요청 없이 주소만 바꾸면 화면 전환은 [[...slug]] 페이지가 처리한다
+                        if (it.href !== pathname) window.history.pushState(null, '', it.href)
                       }}
                       className={cn(
                         'flex h-[clamp(34px,4.4vh,50px)] items-center gap-3 rounded-lg text-lg font-semibold whitespace-nowrap transition-colors',

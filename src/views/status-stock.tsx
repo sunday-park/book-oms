@@ -18,14 +18,14 @@ import type { Publisher } from '@/lib/repo/master'
 import type { StockRow } from '@/lib/repo/reports'
 
 export default function StockStatusPage() {
-  const pubs = useQuery(listPublishers, [], [] as Publisher[])
+  const pubs = useQuery(listPublishers, [], [] as Publisher[], 'publishers')
   const [pubId, setPubId] = useState<number | null>(null)
   const [keyword, setKeyword] = useState('')
   useEffect(() => {
     if (pubId === null && pubs.data.length) setPubId(pubs.data[0].id)
   }, [pubs.data, pubId])
 
-  const stock = useQuery(() => (pubId ? listStock(pubId) : none([] as StockRow[])), [pubId], [] as StockRow[])
+  const stock = useQuery(() => (pubId ? listStock(pubId) : none([] as StockRow[])), [pubId], [] as StockRow[], 'stock')
   const rows = useMemo(() => {
     const kw = keyword.toLowerCase()
     return stock.data.filter((r) => r.name.toLowerCase().includes(kw) || r.code.toLowerCase().includes(kw))

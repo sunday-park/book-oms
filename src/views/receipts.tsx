@@ -24,12 +24,13 @@ type Form = { date: string; publisher_id: number | null; book_id: number | null;
 
 export default function ReceiptsPage() {
   const [f, setF] = useState(initFilter)
-  const pubs = useQuery(listPublishers, [], [] as Publisher[])
-  const books = useQuery(() => listBooks(f.pubId ?? undefined), [f.pubId], [] as Book[])
+  const pubs = useQuery(listPublishers, [], [] as Publisher[], 'publishers')
+  const books = useQuery(() => listBooks(f.pubId ?? undefined), [f.pubId], [] as Book[], 'books/filter')
   const list = useQuery(
     () => listReceipts({ from: f.from, to: f.to, publisherId: f.pubId ?? undefined, bookId: f.bookId ?? undefined }),
     [f],
     [] as Receipt[],
+    'receipts',
   )
   const total = useMemo(() => list.data.reduce((s, r) => s + r.qty, 0), [list.data])
   const [selId, setSelId] = useState<number | null>(null)
