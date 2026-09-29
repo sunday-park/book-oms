@@ -6,7 +6,6 @@ import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { NAV } from '@/components/nav'
 import { buttonVariants } from '@/components/ui/button'
-import { today } from '@/lib/format'
 import { hasUnsaved } from '@/lib/unsaved'
 import { cn } from '@/lib/utils'
 
@@ -44,7 +43,6 @@ export function AppSidebar() {
         {!collapsed && (
           <div className="min-w-0">
             <div className="truncate text-lg leading-tight font-bold text-sidebar-heading">도서 재고관리</div>
-            <div className="mt-1 font-mono text-xs text-sidebar-muted" suppressHydrationWarning>{today()}</div>
           </div>
         )}
       </div>

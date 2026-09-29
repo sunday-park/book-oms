@@ -1,5 +1,7 @@
 /** 로컬 기준 오늘 (YYYY-MM-DD) */
 export const today = () => new Date().toLocaleDateString('sv-SE')
+/** 상단바 표시용: 2026-09-29 (화) */
+export const todayLabel = () => `${today()} (${'일월화수목금토'[new Date().getDay()]})`
 export const won = (n: number) => n.toLocaleString('ko-KR')
 
 export const REGIONS = [

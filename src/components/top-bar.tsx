@@ -3,7 +3,7 @@
 import { usePathname } from 'next/navigation'
 import { findNav } from '@/components/nav'
 import { TONE_TILE } from '@/components/status'
-import { today } from '@/lib/format'
+import { todayLabel } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
 /** 화면별 머리 버튼(예: [출력])이 PageHeader 에서 포털로 들어오는 자리 */
@@ -11,9 +11,9 @@ export const TOPBAR_ACTIONS_ID = 'topbar-actions'
 
 function DatePill() {
   return (
-    <div className="flex items-center gap-2 rounded-full bg-secondary px-3.5 py-1.5 font-mono text-sm text-muted-foreground">
+    <div className="flex items-center gap-2 rounded-full bg-secondary px-3.5 py-1.5 text-sm font-medium text-muted-foreground tabular-nums">
       <span className="size-2 rounded-full bg-live" />
-      <span suppressHydrationWarning>{today()}</span>
+      <span suppressHydrationWarning>{todayLabel()}</span>
     </div>
   )
 }
