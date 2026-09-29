@@ -8,7 +8,7 @@ export default defineConfig({
   webServer: {
     command: 'node e2e/reset-db.mjs && npx next dev -p 3100 -H 127.0.0.1',
     url: 'http://127.0.0.1:3100/books',
-    env: { BOOK_OMS_DB: 'data/e2e.db' },
+    env: { BOOK_OMS_DB: 'data/e2e.db', NEXT_DIST_DIR: '.next-e2e' },
     reuseExistingServer: false,
     timeout: 120_000,
   },
