@@ -80,7 +80,7 @@ export function AppSidebar() {
                       }}
                       className={cn(
                         'flex h-[clamp(34px,4.4vh,50px)] items-center gap-3 rounded-lg text-lg font-semibold whitespace-nowrap transition-colors',
-                        collapsed ? 'justify-center px-0' : 'px-3.5',
+                        collapsed ? 'mx-auto w-[clamp(34px,4.4vh,50px)] justify-center px-0' : 'px-3.5',
                         'outline-none focus-visible:ring-3 focus-visible:ring-sidebar-focus',
                         active ? 'bg-sidebar-primary text-sidebar-primary-foreground' : 'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
                       )}
