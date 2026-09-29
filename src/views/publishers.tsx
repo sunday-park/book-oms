@@ -2,20 +2,28 @@
 
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
+import { type Column, DataTable } from '@/components/data-table'
 import { FormDialog } from '@/components/form-dialog'
 import { ListCard } from '@/components/list-card'
 import { PageHeader } from '@/components/page-header'
 import { Field, SearchBar } from '@/components/search-bar'
 import { SearchInput } from '@/components/search-input'
-import { AddButton, Code, ColHead, EditButton, EmptyRow, SelectableRow } from '@/components/table-helpers'
+import { AddButton, Code, EditButton } from '@/components/table-helpers'
 import { Input } from '@/components/ui/input'
-import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table'
 import { useQuery } from '@/hooks/use-query'
 import { deletePublisher, listPublishers, savePublisher } from '@/lib/actions/master'
 import { josa } from '@/lib/josa'
 import type { Publisher, PublisherInput } from '@/lib/repo/master'
 
 const EMPTY: PublisherInput = { code: '', name: '', phone: '', fax: '', biz_no: '' }
+
+const COLUMNS: Column<Publisher>[] = [
+  { id: 'code', header: '출판사코드', kind: 'code', cell: (p) => <Code>{p.code}</Code> },
+  { id: 'name', header: '출판사명', kind: 'name', className: 'font-semibold', title: (p) => p.name, cell: (p) => p.name },
+  { id: 'phone', header: '전화번호', kind: 'text', title: (p) => p.phone, cell: (p) => p.phone },
+  { id: 'fax', header: '팩스번호', kind: 'text', title: (p) => p.fax, cell: (p) => p.fax },
+  { id: 'biz_no', header: '사업자번호', kind: 'text', title: (p) => p.biz_no ?? '', cell: (p) => p.biz_no },
+]
 
 export default function PublishersPage() {
   const [keyword, setKeyword] = useState('')
@@ -71,29 +79,7 @@ export default function PublishersPage() {
           </>
         }
       >
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <ColHead>출판사코드</ColHead>
-              <ColHead>출판사명</ColHead>
-              <ColHead>전화번호</ColHead>
-              <ColHead>팩스번호</ColHead>
-              <ColHead>사업자번호</ColHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.map((p) => (
-              <SelectableRow key={p.id} selected={p.id === selId} onSelect={() => setSelId(p.id)}>
-                <TableCell><Code>{p.code}</Code></TableCell>
-                <TableCell className="font-semibold">{p.name}</TableCell>
-                <TableCell className="tabular-nums">{p.phone}</TableCell>
-                <TableCell className="tabular-nums">{p.fax}</TableCell>
-                <TableCell className="tabular-nums">{p.biz_no}</TableCell>
-              </SelectableRow>
-            ))}
-            <EmptyRow show={rows.length === 0} cols={5} />
-          </TableBody>
-        </Table>
+        <DataTable tableId="publishers" columns={COLUMNS} rows={rows} rowKey={(p) => p.id} selectedKey={selId} onSelect={(p) => setSelId(p.id)} />
       </ListCard>
       <FormDialog
         open={!!edit}

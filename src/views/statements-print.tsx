@@ -3,6 +3,7 @@
 import { Printer } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { ColGroup } from '@/components/data-table'
 import { EntityCombobox } from '@/components/entity-combobox'
 import { PageHeader } from '@/components/page-header'
 import { Notice, PrintSheet } from '@/components/print-sheet'
@@ -89,10 +90,11 @@ export default function StatementPrintPage() {
               <div>{store.region}</div>
             </div>
           </div>
-          <Table>
+          <Table className="table-fixed">
+            <ColGroup kinds={['no', 'code', 'name', 'money', 'rate', 'money', 'qty', 'money', 'badge']} print />
             <TableHeader>
               <TableRow>
-                <TableHead>No</TableHead>
+                <TableHead className="text-center">No</TableHead>
                 <TableHead>도서코드</TableHead>
                 <TableHead>도서명</TableHead>
                 <TableHead className="text-right">정가</TableHead>
@@ -100,21 +102,21 @@ export default function StatementPrintPage() {
                 <TableHead className="text-right">단가</TableHead>
                 <TableHead className="text-right">부수</TableHead>
                 <TableHead className="text-right">금액</TableHead>
-                <TableHead>구분</TableHead>
+                <TableHead className="text-center">구분</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {items.data.map((it, i) => (
                 <TableRow key={it.id}>
-                  <TableCell>{i + 1}</TableCell>
+                  <TableCell className="text-center">{i + 1}</TableCell>
                   <TableCell>{it.book_code}</TableCell>
-                  <TableCell>{it.book_name}</TableCell>
+                  <TableCell className="truncate" title={it.book_name}>{it.book_name}</TableCell>
                   <TableCell className="text-right">{won(it.list_price)}</TableCell>
                   <TableCell className="text-right">{it.rate}%</TableCell>
                   <TableCell className="text-right">{won(it.unit_price)}</TableCell>
                   <TableCell className="text-right">{won(it.qty)}</TableCell>
                   <TableCell className="text-right">{won(it.amount)}</TableCell>
-                  <TableCell><KindBadge kind={it.kind} /></TableCell>
+                  <TableCell className="text-center"><KindBadge kind={it.kind} /></TableCell>
                 </TableRow>
               ))}
             </TableBody>

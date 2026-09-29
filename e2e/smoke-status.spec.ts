@@ -32,7 +32,7 @@ test('출고 현황 스모크: 목록 노출 + 초기화/조회', async ({ page 
   await expect(page.getByRole('button', { name: '초기화' })).toBeVisible()
   await expect(page.getByRole('button', { name: '조회' })).toBeVisible()
 
-  await expect(page.getByLabel('날짜')).toHaveValue(today())
+  await expect(page.getByLabel('날짜', { exact: true })).toHaveValue(today())
 
   await expect(page.getByText('총 출고부수')).toBeVisible()
   const footerRow = page.getByRole('row').filter({ hasText: '총 출고부수' })

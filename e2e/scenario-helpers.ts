@@ -93,7 +93,7 @@ export async function addBook(page: Page, pubName: string, name: string, price =
   await expect(dialog(page)).toBeHidden()
   const row = page.getByRole('row', { name: new RegExp(escape(name)) })
   await expect(row).toBeVisible()
-  return (await row.getByRole('cell').nth(1).innerText()).trim()
+  return (await col(row, 'code').innerText()).trim()
 }
 
 export async function receive(page: Page, pubName: string, bookName: string, qty: number, date?: string) {
@@ -129,6 +129,9 @@ export async function openEntry(page: Page, pubName: string, storeName: string, 
   await withPosts(page, 3, () => pick(page, page, '출판사', pubName))
   await expect(page.getByRole('button', { name: '저장' })).toBeVisible()
 }
+
+/** 행에서 열 id(data-col)로 칸을 찾는다 — 열 순서를 바꿔도 같은 칸 */
+export const col = (row: Locator, id: string) => row.locator(`[data-col="${id}"]`)
 
 export const entryRow = (page: Page, n: number) => page.locator('main tbody tr').nth(n - 1)
 

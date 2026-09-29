@@ -2,6 +2,7 @@
 
 import { Printer } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { ColGroup } from '@/components/data-table'
 import { EntityCombobox } from '@/components/entity-combobox'
 import { PageHeader } from '@/components/page-header'
 import { Notice, PrintSheet } from '@/components/print-sheet'
@@ -52,7 +53,8 @@ export default function LedgerPage() {
             </div>
           }
         >
-          <Table>
+          <Table className="table-fixed">
+            <ColGroup kinds={['code', 'name', 'qty', 'qty', 'qty', 'qty']} print />
             <TableHeader>
               <TableRow>
                 <TableHead>도서코드</TableHead>
@@ -67,7 +69,7 @@ export default function LedgerPage() {
               {stock.data.map((r) => (
                 <TableRow key={r.book_id}>
                   <TableCell>{r.code}</TableCell>
-                  <TableCell>{r.name}</TableCell>
+                  <TableCell className="truncate" title={r.name}>{r.name}</TableCell>
                   <TableCell className="text-right">{won(r.received)}</TableCell>
                   <TableCell className="text-right">{won(r.shipped)}</TableCell>
                   <TableCell className="text-right">{won(r.returned)}</TableCell>

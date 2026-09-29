@@ -2,21 +2,28 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
+import { type Column, DataTable } from '@/components/data-table'
 import { EntityCombobox } from '@/components/entity-combobox'
 import { FormDialog } from '@/components/form-dialog'
 import { ListCard } from '@/components/list-card'
 import { PageHeader } from '@/components/page-header'
 import { Field, SearchBar } from '@/components/search-bar'
 import { SearchInput } from '@/components/search-input'
-import { AddButton, Code, ColHead, EditButton, EmptyRow, SelectableRow } from '@/components/table-helpers'
+import { AddButton, Code, EditButton } from '@/components/table-helpers'
 import { Input } from '@/components/ui/input'
-import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table'
 import { useQuery } from '@/hooks/use-query'
 import { createBook, deleteBook, listBooks, listPublishers, updateBook } from '@/lib/actions/master'
 import { won } from '@/lib/format'
 import { josa } from '@/lib/josa'
 import { pubOptions } from '@/lib/options'
 import type { Book, Publisher } from '@/lib/repo/master'
+
+const COLUMNS: Column<Book>[] = [
+  { id: 'seq', header: '순번', kind: 'no', pinned: 'start', cell: (b) => b.seq },
+  { id: 'code', header: '도서코드', kind: 'code', cell: (b) => <Code>{b.code}</Code> },
+  { id: 'name', header: '도서명', kind: 'name', className: 'font-bold', title: (b) => b.name, cell: (b) => b.name },
+  { id: 'price', header: '정가', kind: 'money', cell: (b) => `${won(b.list_price)}원` },
+]
 
 type Form = { id?: number; publisher_id: number | null; name: string; list_price: number }
 
@@ -100,47 +107,24 @@ export default function BooksPage() {
           </>
         }
       >
-        <Table className="table-fixed">
-          <colgroup>
-            <col className="w-[84px]" />
-            <col className="w-[195px]" />
-            <col />
-            <col className="w-[240px]" />
-          </colgroup>
-          {groups.map((g) => (
-            <TableBody key={g[0].publisher_id}>
-              <TableRow className="hover:bg-transparent">
-                {/* 묶음 머리행·열 머리행은 스크롤 시 위에 고정되고, 다음 묶음이 올라오며 덮는다 */}
-                <TableCell colSpan={4} className="sticky top-0 z-10 h-[50px]! border-r-0! bg-group-head">
-                  <div className="flex items-center gap-2.5">
-                    <span className="font-semibold text-emphasis">{g[0].publisher_name}</span>
-                    <span className="rounded-md border bg-card px-2 py-0.5 text-xs text-muted-foreground tabular-nums">{g[0].publisher_code}</span>
-                    <span className="ml-auto text-[15px] text-muted-foreground">{g.length}종</span>
-                  </div>
-                </TableCell>
-              </TableRow>
-              <TableRow className="hover:bg-transparent">
-                <ColHead className="top-[50px]!">순번</ColHead>
-                <ColHead className="top-[50px]!">도서코드</ColHead>
-                <ColHead className="top-[50px]!">도서명</ColHead>
-                <ColHead className="top-[50px]! text-right">정가</ColHead>
-              </TableRow>
-              {g.map((b) => (
-                <SelectableRow key={b.id} selected={b.id === selId} onSelect={() => setSelId(b.id)}>
-                  <TableCell className="text-center">{b.seq}</TableCell>
-                  <TableCell><Code>{b.code}</Code></TableCell>
-                  <TableCell className="truncate font-bold">{b.name}</TableCell>
-                  <TableCell className="text-right">{won(b.list_price)}원</TableCell>
-                </SelectableRow>
-              ))}
-            </TableBody>
-          ))}
-          {rows.length === 0 && (
-            <TableBody>
-              <EmptyRow show cols={4} />
-            </TableBody>
-          )}
-        </Table>
+        <DataTable
+          tableId="books"
+          columns={COLUMNS}
+          rowKey={(b) => b.id}
+          groups={groups.map((g) => ({
+            key: g[0].publisher_id,
+            header: (
+              <div className="flex items-center gap-2.5">
+                <span className="font-semibold text-emphasis">{g[0].publisher_name}</span>
+                <span className="rounded-md border bg-card px-2 py-0.5 text-xs text-muted-foreground tabular-nums">{g[0].publisher_code}</span>
+                <span className="ml-auto text-[15px] text-muted-foreground">{g.length}종</span>
+              </div>
+            ),
+            rows: g,
+          }))}
+          selectedKey={selId}
+          onSelect={(b) => setSelId(b.id)}
+        />
       </ListCard>
       <FormDialog
         open={!!form}

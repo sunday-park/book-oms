@@ -1,16 +1,16 @@
 'use client'
 
-import { Copy, DatabaseBackup, FolderOpen, History } from 'lucide-react'
+import { Columns3, Copy, DatabaseBackup, FolderOpen, History } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
+import { useColumnPrefs } from '@/components/column-prefs'
+import { type Column, DataTable } from '@/components/data-table'
 import { ListCard } from '@/components/list-card'
 import { PageHeader } from '@/components/page-header'
 import { Field } from '@/components/search-bar'
-import { ColHead } from '@/components/table-helpers'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table'
 import { clearQueryCache, useQuery } from '@/hooks/use-query'
 import { backupNow, getDbInfo, listBackups, openBackupFolder, openDbFolder, restoreBackup } from '@/lib/actions/settings'
 import { dateTime, fileSize } from '@/lib/format'
@@ -40,6 +40,7 @@ export default function SettingsPage() {
   const [busy, setBusy] = useState(false)
   const [restoring, setRestoring] = useState<string | null>(null)
   const [typed, setTyped] = useState('')
+  const { resetAll } = useColumnPrefs()
 
   async function copyPath() {
     if (!info) return
@@ -81,6 +82,29 @@ export default function SettingsPage() {
     toast.success('복원했습니다')
     // 모든 화면이 새 데이터로 다시 시작하도록 새로고침 (토스트를 잠깐 보여준 뒤)
     setTimeout(() => window.location.reload(), 800)
+  }
+
+  const backupColumns: Column<BackupFile>[] = [
+    { id: 'name', header: '파일명', kind: 'name', className: 'tabular-nums', title: (b) => b.name, cell: (b) => b.name },
+    { id: 'mtime', header: '시각', kind: 'datetime', cell: (b) => dateTime(b.mtime) },
+    { id: 'size', header: '크기', kind: 'qty', cell: (b) => fileSize(b.size) },
+    {
+      id: 'restore',
+      header: '복원',
+      kind: 'button',
+      pinned: 'end',
+      cell: (b) => (
+        <Button variant="danger" className="h-9 px-3" disabled={busy} onClick={() => askRestore(b.name)}>
+          <History />
+          복원
+        </Button>
+      ),
+    },
+  ]
+
+  async function resetColumns() {
+    if (!confirm('모든 목록 표의 열 순서를 처음 상태로 되돌릴까요?')) return
+    if (await resetAll()) toast.success('열 순서를 초기화했습니다.')
   }
 
   const c = info?.counts
@@ -141,36 +165,21 @@ export default function SettingsPage() {
           </>
         }
       >
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <ColHead>파일명</ColHead>
-              <ColHead className="w-48">시각</ColHead>
-              <ColHead className="w-32">크기</ColHead>
-              <ColHead className="w-32">복원</ColHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {backups.map((b) => (
-              <TableRow key={b.name}>
-                <TableCell className="tabular-nums">{b.name}</TableCell>
-                <TableCell className="tabular-nums">{dateTime(b.mtime)}</TableCell>
-                <TableCell className="text-right tabular-nums">{fileSize(b.size)}</TableCell>
-                <TableCell className="text-center">
-                  <Button variant="danger" className="h-9 px-3" disabled={busy} onClick={() => askRestore(b.name)}>
-                    <History />
-                    복원
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-            {backups.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={4} className="h-24! text-center text-muted-foreground">백업이 없습니다.</TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+        <DataTable tableId="backups" columns={backupColumns} rows={backups} rowKey={(b) => b.name} empty="백업이 없습니다." />
+      </ListCard>
+
+      <ListCard
+        title="화면 설정"
+        actions={
+          <Button variant="outline" onClick={resetColumns}>
+            <Columns3 />
+            열 순서 초기화
+          </Button>
+        }
+      >
+        <p className="px-6 py-5 text-[15px] text-muted-foreground">
+          목록 표의 머리칸 ⠿ 손잡이를 끌어 열 순서를 바꿀 수 있습니다 (키보드: 손잡이에서 스페이스바 → 좌우 화살표 → 스페이스바). 바꾼 순서는 DB 파일에 저장되므로 백업·복원에도 함께 포함됩니다.
+        </p>
       </ListCard>
 
       <Dialog open={!!restoring} onOpenChange={(o) => !o && !busy && setRestoring(null)}>

@@ -27,7 +27,7 @@ export function KindBadge({ kind, className }: { kind: ShipKind; className?: str
 }
 
 export function PrintedBadge() {
-  return <span className={cn(PILL, 'ml-2 bg-ok-bg text-sm text-ok')}>인쇄됨</span>
+  return <span className={cn(PILL, 'bg-ok-bg text-sm text-ok')}>인쇄됨</span>
 }
 
 /** 거래 종류별 강조색 — 입고 파랑, 출고 남색, 반품 주황 */

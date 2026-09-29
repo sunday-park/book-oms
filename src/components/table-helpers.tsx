@@ -1,20 +1,8 @@
-import { GripVertical, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Pencil, Plus, Trash2 } from 'lucide-react'
 import type { ComponentProps, ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
-import { TableCell, TableHead, TableRow } from '@/components/ui/table'
+import { TableCell, TableRow } from '@/components/ui/table'
 import { cn } from '@/lib/utils'
-
-/** 목록 표 머리칸 — 앞의 ⠿ 아이콘은 장식용 */
-export function ColHead({ className, children, ...props }: ComponentProps<'th'>) {
-  return (
-    <TableHead className={className} {...props}>
-      <span className="inline-flex items-center gap-2">
-        <GripVertical aria-hidden className="size-3.5 text-line-strong" />
-        {children}
-      </span>
-    </TableHead>
-  )
-}
 
 /** 클릭하거나 포커스 후 Enter/Space 로 선택되는 행 */
 export function SelectableRow({ selected, onSelect, className, ...props }: ComponentProps<'tr'> & { selected: boolean; onSelect: () => void }) {
@@ -71,11 +59,11 @@ export function Code({ children }: { children: ReactNode }) {
   return <span className="text-muted-foreground tabular-nums">{children}</span>
 }
 
-export function EmptyRow({ show, cols }: { show: boolean; cols: number }) {
+export function EmptyRow({ show, cols, text = '조회된 데이터가 없습니다.' }: { show: boolean; cols: number; text?: string }) {
   if (!show) return null
   return (
     <TableRow>
-      <TableCell colSpan={cols} className="h-24! text-center text-muted-foreground">조회된 데이터가 없습니다.</TableCell>
+      <TableCell colSpan={cols} className="h-24! text-center text-muted-foreground">{text}</TableCell>
     </TableRow>
   )
 }

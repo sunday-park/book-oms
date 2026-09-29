@@ -1,14 +1,14 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { type Column, DataTable } from '@/components/data-table'
 import { EntityCombobox } from '@/components/entity-combobox'
 import { ListCard } from '@/components/list-card'
 import { PageHeader } from '@/components/page-header'
 import { Field, SearchBar } from '@/components/search-bar'
 import { SearchInput } from '@/components/search-input'
 import { StockQty } from '@/components/status'
-import { Code, ColHead, EmptyRow } from '@/components/table-helpers'
-import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table'
+import { Code } from '@/components/table-helpers'
 import { none, useQuery } from '@/hooks/use-query'
 import { listStock } from '@/lib/actions/inventory'
 import { listPublishers } from '@/lib/actions/master'
@@ -16,6 +16,15 @@ import { won } from '@/lib/format'
 import { pubOptions } from '@/lib/options'
 import type { Publisher } from '@/lib/repo/master'
 import type { StockRow } from '@/lib/repo/reports'
+
+const COLUMNS: Column<StockRow>[] = [
+  { id: 'code', header: '도서코드', kind: 'code', cell: (r) => <Code>{r.code}</Code> },
+  { id: 'name', header: '도서명', kind: 'name', className: 'font-semibold', title: (r) => r.name, cell: (r) => r.name },
+  { id: 'received', header: '입고', kind: 'qty', cell: (r) => won(r.received) },
+  { id: 'shipped', header: '출고', kind: 'qty', cell: (r) => won(r.shipped) },
+  { id: 'returned', header: '반품', kind: 'qty', cell: (r) => won(r.returned) },
+  { id: 'stock', header: '현재고', kind: 'qty', cell: (r) => <StockQty value={r.stock} /> },
+]
 
 export default function StockStatusPage() {
   const pubs = useQuery(listPublishers, [], [] as Publisher[], 'publishers')
@@ -49,31 +58,7 @@ export default function StockStatusPage() {
         </Field>
       </SearchBar>
       <ListCard title="도서별 재고" count={`${rows.length}종`}>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <ColHead>도서코드</ColHead>
-              <ColHead>도서명</ColHead>
-              <ColHead className="text-right">입고</ColHead>
-              <ColHead className="text-right">출고</ColHead>
-              <ColHead className="text-right">반품</ColHead>
-              <ColHead className="text-right">현재고</ColHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.map((r) => (
-              <TableRow key={r.book_id}>
-                <TableCell><Code>{r.code}</Code></TableCell>
-                <TableCell className="font-semibold">{r.name}</TableCell>
-                <TableCell className="text-right">{won(r.received)}</TableCell>
-                <TableCell className="text-right">{won(r.shipped)}</TableCell>
-                <TableCell className="text-right">{won(r.returned)}</TableCell>
-                <TableCell className="text-right"><StockQty value={r.stock} /></TableCell>
-              </TableRow>
-            ))}
-            <EmptyRow show={rows.length === 0} cols={6} />
-          </TableBody>
-        </Table>
+        <DataTable tableId="stock" columns={COLUMNS} rows={rows} rowKey={(r) => r.book_id} />
       </ListCard>
     </>
   )

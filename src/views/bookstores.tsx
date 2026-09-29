@@ -2,15 +2,15 @@
 
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
+import { type Column, DataTable } from '@/components/data-table'
 import { FormDialog } from '@/components/form-dialog'
 import { ListCard } from '@/components/list-card'
 import { PageHeader } from '@/components/page-header'
 import { Field, SearchBar } from '@/components/search-bar'
 import { SearchInput } from '@/components/search-input'
-import { AddButton, Code, ColHead, EditButton, EmptyRow, SelectableRow } from '@/components/table-helpers'
+import { AddButton, Code, EditButton } from '@/components/table-helpers'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table'
 import { useQuery } from '@/hooks/use-query'
 import { deleteBookstore, listBookstores, saveBookstore } from '@/lib/actions/master'
 import { REGIONS } from '@/lib/format'
@@ -19,6 +19,12 @@ import type { Bookstore, BookstoreInput } from '@/lib/repo/master'
 
 const EMPTY: BookstoreInput = { code: '', name: '', region: '' }
 const ALL = '__all'
+
+const COLUMNS: Column<Bookstore>[] = [
+  { id: 'code', header: '서점코드', kind: 'code', cell: (s) => <Code>{s.code}</Code> },
+  { id: 'name', header: '서점명', kind: 'name', className: 'font-semibold', title: (s) => s.name, cell: (s) => s.name },
+  { id: 'region', header: '지역', kind: 'text', title: (s) => s.region, cell: (s) => s.region },
+]
 
 export default function BookstoresPage() {
   const [keyword, setKeyword] = useState('')
@@ -94,25 +100,7 @@ export default function BookstoresPage() {
           </>
         }
       >
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <ColHead>서점코드</ColHead>
-              <ColHead>서점명</ColHead>
-              <ColHead>지역</ColHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.map((s) => (
-              <SelectableRow key={s.id} selected={s.id === selId} onSelect={() => setSelId(s.id)}>
-                <TableCell><Code>{s.code}</Code></TableCell>
-                <TableCell className="font-semibold">{s.name}</TableCell>
-                <TableCell>{s.region}</TableCell>
-              </SelectableRow>
-            ))}
-            <EmptyRow show={rows.length === 0} cols={3} />
-          </TableBody>
-        </Table>
+        <DataTable tableId="bookstores" columns={COLUMNS} rows={rows} rowKey={(s) => s.id} selectedKey={selId} onSelect={(s) => setSelId(s.id)} />
       </ListCard>
       <FormDialog
         open={!!edit}

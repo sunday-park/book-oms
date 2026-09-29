@@ -1,8 +1,7 @@
 import { expect, test, type Dialog } from '@playwright/test'
 import {
-  addBook, addPublisher, addRow, addStore, dialog, entryRow, fillRow, gotoReady, num, openEntry, pick, receive, saveEntry, saveEntryRejected,
-  stockRow, submitReturn, today, trackErrors,
-} from './scenario-helpers'
+  addBook, addPublisher, addRow, addStore, col, dialog, entryRow, fillRow, gotoReady, num, openEntry, pick, receive, saveEntry, saveEntryRejected,
+  stockRow, submitReturn, today, trackErrors } from './scenario-helpers'
 
 /**
  * 실제 사용 흐름 시나리오 (flow 다음에 같은 서버·DB 에서 실행).
@@ -51,7 +50,7 @@ test('S1 입고 없이 출고 → 저장이 막히고, 새로고침 후에도 �
   await expect(page.getByLabel('1행 부수')).toHaveValue('0')
 
   const row = await stockRow(page, Q1, 'S1책')
-  await expect(row.getByRole('cell').nth(3)).toHaveText('0') // 출고
+  await expect(col(row, 'shipped')).toHaveText('0') // 출고
 })
 
 test('S2 입고 10 → 출고 10 → 1부 추가 막힘 → 반품 3 → 3부 추가 → 품절', async ({ page }) => {
@@ -80,11 +79,10 @@ test('S2 입고 10 → 출고 10 → 1부 추가 막힘 → 반품 3 → 3부 �
   await saveEntry(page)
 
   const row = await stockRow(page, Q1, 'S2책')
-  const cells = row.getByRole('cell')
-  await expect(cells.nth(2)).toHaveText('10')
-  await expect(cells.nth(3)).toHaveText('13')
-  await expect(cells.nth(4)).toHaveText('3')
-  await expect(cells.nth(5)).toHaveText('0품절')
+  await expect(col(row, 'received')).toHaveText('10')
+  await expect(col(row, 'shipped')).toHaveText('13')
+  await expect(col(row, 'returned')).toHaveText('3')
+  await expect(col(row, 'stock')).toHaveText('0품절')
 })
 
 test('S3 출고 → 명세서 출력 → 인쇄된 행 잠김 → 새 행 저장 → 재출력엔 새 행만', async ({ page }) => {
@@ -149,7 +147,7 @@ test('S4 재고가 음수가 되는 입고 삭제는 막히고, 영향 없는 �
   await page.getByRole('button', { name: '삭제' }).click()
   await expect(page.locator('main tbody tr')).toHaveCount(2)
   const row = await stockRow(page, Q1, 'S4책')
-  await expect(row.getByRole('cell').nth(5)).toHaveText('1')
+  await expect(col(row, 'stock')).toHaveText('1')
 })
 
 test('S5 두 출판사 × 두 서점 → 출고증·출고 현황·재고 원장 합계', async ({ page }) => {
@@ -185,7 +183,7 @@ test('S5 두 출판사 × 두 서점 → 출고증·출고 현황·재고 원장
 
   // 출고 현황: 날짜·서점 필터 합계
   await gotoReady(page, '/status/shipments')
-  await page.getByLabel('날짜').fill(D5)
+  await page.getByLabel('날짜', { exact: true }).fill(D5)
   const total = page.getByRole('row', { name: /총 출고부수/ }).getByRole('cell').last()
   await expect(total).toHaveText('22')
   await pick(page, page, '서점', 'S5서점갑')

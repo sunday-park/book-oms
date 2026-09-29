@@ -2,15 +2,15 @@
 
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
+import { type Column, DataTable } from '@/components/data-table'
 import { EntityCombobox } from '@/components/entity-combobox'
 import { FormDialog } from '@/components/form-dialog'
 import { ListCard } from '@/components/list-card'
 import { PageHeader } from '@/components/page-header'
 import { Field, SearchBar } from '@/components/search-bar'
 import { TONE_TEXT } from '@/components/status'
-import { AddButton, Code, ColHead, DeleteButton, EmptyRow, SelectableRow } from '@/components/table-helpers'
+import { AddButton, Code, DeleteButton } from '@/components/table-helpers'
 import { Input } from '@/components/ui/input'
-import { Table, TableBody, TableCell, TableFooter, TableHeader, TableRow } from '@/components/ui/table'
 import { none, useQuery } from '@/hooks/use-query'
 import { createReturn, deleteReturn, listReturns } from '@/lib/actions/inventory'
 import { listBookstores, listBooks, listPublishers } from '@/lib/actions/master'
@@ -24,6 +24,15 @@ import type { Book, Bookstore, Publisher } from '@/lib/repo/master'
 const initFilter = () => ({ from: today(), to: today(), pubId: null as number | null, storeId: null as number | null })
 type Form = { date: string; publisher_id: number | null; bookstore_id: number | null; book_id: number | null; qty: number }
 
+const COLUMNS: Column<ReturnRow>[] = [
+  { id: 'date', header: '반품날짜', kind: 'date', cell: (r) => r.date },
+  { id: 'publisher', header: '출판사', kind: 'text', title: (r) => r.publisher_name, cell: (r) => r.publisher_name },
+  { id: 'bookstore', header: '서점', kind: 'text', title: (r) => r.bookstore_name, cell: (r) => r.bookstore_name },
+  { id: 'book_code', header: '도서코드', kind: 'code', cell: (r) => <Code>{r.book_code}</Code> },
+  { id: 'book_name', header: '도서명', kind: 'name', className: 'font-semibold', title: (r) => r.book_name, cell: (r) => r.book_name },
+  { id: 'qty', header: '부수', kind: 'qty', className: `font-semibold ${TONE_TEXT.return}`, cell: (r) => won(r.qty) },
+]
+
 export default function ReturnsPage() {
   const [f, setF] = useState(initFilter)
   const pubs = useQuery(listPublishers, [], [] as Publisher[], 'publishers')
@@ -35,6 +44,7 @@ export default function ReturnsPage() {
     'returns',
   )
   const total = useMemo(() => list.data.reduce((s, r) => s + r.qty, 0), [list.data])
+  const columns = useMemo(() => COLUMNS.map((c) => (c.id === 'qty' ? { ...c, footer: won(total) } : c)), [total])
   const [selId, setSelId] = useState<number | null>(null)
   const selected = list.data.find((r) => r.id === selId)
 
@@ -97,37 +107,15 @@ export default function ReturnsPage() {
           </>
         }
       >
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <ColHead>반품날짜</ColHead>
-              <ColHead>출판사</ColHead>
-              <ColHead>서점</ColHead>
-              <ColHead>도서코드</ColHead>
-              <ColHead>도서명</ColHead>
-              <ColHead className="text-right">부수</ColHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {list.data.map((r) => (
-              <SelectableRow key={r.id} selected={r.id === selId} onSelect={() => setSelId(r.id)}>
-                <TableCell className="tabular-nums">{r.date}</TableCell>
-                <TableCell>{r.publisher_name}</TableCell>
-                <TableCell>{r.bookstore_name}</TableCell>
-                <TableCell><Code>{r.book_code}</Code></TableCell>
-                <TableCell className="font-semibold">{r.book_name}</TableCell>
-                <TableCell className={`text-right font-semibold ${TONE_TEXT.return}`}>{won(r.qty)}</TableCell>
-              </SelectableRow>
-            ))}
-            <EmptyRow show={list.data.length === 0} cols={6} />
-          </TableBody>
-          <TableFooter>
-            <TableRow>
-              <TableCell colSpan={5}>총 반품부수</TableCell>
-              <TableCell className="text-right">{won(total)}</TableCell>
-            </TableRow>
-          </TableFooter>
-        </Table>
+        <DataTable
+          tableId="returns"
+          columns={columns}
+          rows={list.data}
+          rowKey={(r) => r.id}
+          selectedKey={selId}
+          onSelect={(r) => setSelId(r.id)}
+          footerLabel="총 반품부수"
+        />
       </ListCard>
       <FormDialog open={!!form} title="반품 등록" error={error} onClose={() => setForm(null)} onSave={save}>
         {form && (

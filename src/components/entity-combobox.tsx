@@ -9,7 +9,7 @@ import type { Option } from '@/lib/options'
 import { cn } from '@/lib/utils'
 
 /** 출판사·서점·도서 자동완성 선택 */
-export function EntityCombobox({ label, options, value, onChange, placeholder = '선택', allLabel, disabled }: {
+export function EntityCombobox({ label, options, value, onChange, placeholder = '선택', allLabel, disabled, className }: {
   label: string
   options: Option[]
   value: number | null
@@ -17,6 +17,8 @@ export function EntityCombobox({ label, options, value, onChange, placeholder = 
   placeholder?: string
   allLabel?: string
   disabled?: boolean
+  /** 기본 너비(w-56) 대신 — 표 칸 안에서는 w-full */
+  className?: string
 }) {
   const [open, setOpen] = useState(false)
   const selected = options.find((o) => o.value === value)
@@ -27,7 +29,7 @@ export function EntityCombobox({ label, options, value, onChange, placeholder = 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" role="combobox" aria-label={label} disabled={disabled} className="w-56 justify-between px-3.5 text-[17px] font-normal disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100 disabled:saturate-100">
+        <Button variant="outline" role="combobox" aria-label={label} disabled={disabled} className={cn('w-56 justify-between px-3.5 text-[17px] font-normal disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100 disabled:saturate-100', className)}>
           <span className={cn('truncate', !selected && !(allLabel && value === null) && 'text-placeholder')}>
             {selected ? selected.label : allLabel && value === null ? allLabel : placeholder}
           </span>

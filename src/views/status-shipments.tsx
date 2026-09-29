@@ -1,14 +1,14 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { type Column, DataTable } from '@/components/data-table'
 import { EntityCombobox } from '@/components/entity-combobox'
 import { ListCard } from '@/components/list-card'
 import { PageHeader } from '@/components/page-header'
 import { Field, SearchBar } from '@/components/search-bar'
 import { KindBadge, TONE_TEXT } from '@/components/status'
-import { Code, ColHead, EmptyRow } from '@/components/table-helpers'
+import { Code } from '@/components/table-helpers'
 import { Input } from '@/components/ui/input'
-import { Table, TableBody, TableCell, TableFooter, TableHeader, TableRow } from '@/components/ui/table'
 import { useQuery } from '@/hooks/use-query'
 import { listShipmentStatus } from '@/lib/actions/inventory'
 import { listBookstores, listPublishers } from '@/lib/actions/master'
@@ -18,6 +18,16 @@ import type { Bookstore, Publisher } from '@/lib/repo/master'
 import type { ShipmentStatusRow } from '@/lib/repo/reports'
 
 const initFilter = () => ({ date: today(), pubId: null as number | null, storeId: null as number | null })
+
+const COLUMNS: Column<ShipmentStatusRow>[] = [
+  { id: 'book_code', header: '도서코드', kind: 'code', cell: (r) => <Code>{r.book_code}</Code> },
+  { id: 'book_name', header: '도서명', kind: 'name', className: 'font-semibold', title: (r) => r.book_name, cell: (r) => r.book_name },
+  { id: 'date', header: '날짜', kind: 'date', cell: (r) => r.date },
+  { id: 'publisher', header: '출판사', kind: 'text', title: (r) => r.publisher_name, cell: (r) => r.publisher_name },
+  { id: 'bookstore', header: '서점', kind: 'text', title: (r) => r.bookstore_name, cell: (r) => r.bookstore_name },
+  { id: 'kind', header: '구분', kind: 'badge', cell: (r) => <KindBadge kind={r.kind} /> },
+  { id: 'qty', header: '출고부수', kind: 'qty', className: `font-semibold ${TONE_TEXT.ship}`, cell: (r) => won(r.qty) },
+]
 
 export default function ShipmentStatusPage() {
   const [f, setF] = useState(initFilter)
@@ -30,6 +40,7 @@ export default function ShipmentStatusPage() {
     'shipment-status',
   )
   const total = useMemo(() => list.data.reduce((s, r) => s + r.qty, 0), [list.data])
+  const columns = useMemo(() => COLUMNS.map((c) => (c.id === 'qty' ? { ...c, footer: won(total) } : c)), [total])
 
   return (
     <>
@@ -46,39 +57,7 @@ export default function ShipmentStatusPage() {
         </Field>
       </SearchBar>
       <ListCard title="출고 내역" count={`${list.data.length}건`}>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <ColHead>도서코드</ColHead>
-              <ColHead>도서명</ColHead>
-              <ColHead>날짜</ColHead>
-              <ColHead>출판사</ColHead>
-              <ColHead>서점</ColHead>
-              <ColHead>구분</ColHead>
-              <ColHead className="text-right">출고부수</ColHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {list.data.map((r) => (
-              <TableRow key={r.id}>
-                <TableCell><Code>{r.book_code}</Code></TableCell>
-                <TableCell className="font-semibold">{r.book_name}</TableCell>
-                <TableCell className="tabular-nums">{r.date}</TableCell>
-                <TableCell>{r.publisher_name}</TableCell>
-                <TableCell>{r.bookstore_name}</TableCell>
-                <TableCell><KindBadge kind={r.kind} /></TableCell>
-                <TableCell className={`text-right font-semibold ${TONE_TEXT.ship}`}>{won(r.qty)}</TableCell>
-              </TableRow>
-            ))}
-            <EmptyRow show={list.data.length === 0} cols={7} />
-          </TableBody>
-          <TableFooter>
-            <TableRow>
-              <TableCell colSpan={6}>총 출고부수</TableCell>
-              <TableCell className="text-right">{won(total)}</TableCell>
-            </TableRow>
-          </TableFooter>
-        </Table>
+        <DataTable tableId="shipment-status" columns={columns} rows={list.data} rowKey={(r) => r.id} footerLabel="총 출고부수" />
       </ListCard>
     </>
   )

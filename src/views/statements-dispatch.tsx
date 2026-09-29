@@ -2,6 +2,7 @@
 
 import { Printer } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { ColGroup } from '@/components/data-table'
 import { PageHeader } from '@/components/page-header'
 import { Notice, PrintSheet } from '@/components/print-sheet'
 import { Field, SearchBar } from '@/components/search-bar'
@@ -78,12 +79,13 @@ export default function DispatchPage() {
               <h3 className="font-semibold">
                 {g.bookstore_name} <span className="text-sm font-normal text-muted-foreground">({g.region})</span>
               </h3>
-              <Table>
+              <Table className="table-fixed">
+                <ColGroup kinds={['code', 'name', 'badge', 'qty']} print />
                 <TableHeader>
                   <TableRow>
                     <TableHead>도서코드</TableHead>
                     <TableHead>도서명</TableHead>
-                    <TableHead>구분</TableHead>
+                    <TableHead className="text-center">구분</TableHead>
                     <TableHead className="text-right">부수</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -91,8 +93,8 @@ export default function DispatchPage() {
                   {g.items.map((it) => (
                     <TableRow key={it.id}>
                       <TableCell>{it.book_code}</TableCell>
-                      <TableCell>{it.book_name}</TableCell>
-                      <TableCell><KindBadge kind={it.kind} /></TableCell>
+                      <TableCell className="truncate" title={it.book_name}>{it.book_name}</TableCell>
+                      <TableCell className="text-center"><KindBadge kind={it.kind} /></TableCell>
                       <TableCell className="text-right">{won(it.qty)}</TableCell>
                     </TableRow>
                   ))}

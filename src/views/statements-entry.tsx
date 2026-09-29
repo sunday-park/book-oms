@@ -3,17 +3,17 @@
 import { Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import { type Column, DataTable } from '@/components/data-table'
 import { EntityCombobox } from '@/components/entity-combobox'
 import { ListCard } from '@/components/list-card'
 import { PageHeader } from '@/components/page-header'
 import { Notice } from '@/components/print-sheet'
 import { Field, SearchBar } from '@/components/search-bar'
 import { KindBadge, PrintedBadge } from '@/components/status'
-import { Code, ColHead } from '@/components/table-helpers'
+import { Code } from '@/components/table-helpers'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { none, useQuery } from '@/hooks/use-query'
 import { deleteShipment, getShipment, listAvailable, saveShipment } from '@/lib/actions/inventory'
 import { listBookstores, listBooks, listPublishers } from '@/lib/actions/master'
@@ -128,6 +128,96 @@ export default function ShipmentEntryPage() {
     if (!dirty || confirm('저장하지 않은 변경 내용이 있습니다. 버리고 계속할까요?')) fn()
   }
 
+  const columns: Column<Row>[] = [
+    { id: 'no', header: 'No', kind: 'no', pinned: 'start', cell: (_, i) => i + 1 },
+    {
+      id: 'code',
+      header: '도서코드',
+      kind: 'code',
+      // 인쇄됨 표시는 코드 아래로 내려 열 너비 안에 둔다
+      cell: (r) => (
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <Code>{r.book_id ? bookMap.get(r.book_id)?.code : ''}</Code>
+          {r.printed && <PrintedBadge />}
+        </div>
+      ),
+    },
+    {
+      id: 'book',
+      header: '도서명',
+      kind: 'name',
+      cell: (r, i) => (
+        <EntityCombobox label={`${i + 1}행 도서`} placeholder="도서 선택" options={bookOptions(books.data)} value={r.book_id} onChange={(v) => update(r.key, { book_id: v })} disabled={r.printed} className="w-full" />
+      ),
+    },
+    { id: 'list_price', header: '정가', kind: 'money', cell: (_, i) => `${won(calc[i].listPrice)}원` },
+    {
+      id: 'rate',
+      header: '출고율%',
+      kind: 'rate',
+      cell: (r, i) => (
+        <Input aria-label={`${i + 1}행 출고율`} type="number" min={0} max={100} step="0.1" className="text-right" value={r.rate} onChange={(e) => update(r.key, { rate: Number(e.target.value) })} disabled={r.printed} />
+      ),
+    },
+    { id: 'unit', header: '단가', kind: 'money', cell: (_, i) => `${won(calc[i].unit)}원` },
+    { id: 'amount', header: '금액', kind: 'money', cell: (_, i) => `${won(calc[i].amount)}원`, footer: `${won(totalAmount)}원` },
+    {
+      id: 'kind',
+      header: '구분',
+      kind: 'badge',
+      className: 'px-1.5!', // 100px 칸에 선택 상자(배지 + ▾)가 들어가도록 여백을 줄인다
+      cell: (r, i) => (
+        <Select value={r.kind} onValueChange={(v) => update(r.key, { kind: v as ShipKind })} disabled={r.printed}>
+          <SelectTrigger aria-label={`${i + 1}행 구분`} className="w-full gap-0.5 pr-1.5 pl-2">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {SHIP_KINDS.map((k) => (
+              <SelectItem key={k} value={k}><KindBadge kind={k} /></SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ),
+    },
+    {
+      id: 'qty',
+      header: '부수',
+      kind: 'qty',
+      footer: `총 ${won(totalQty)}부`,
+      cell: (r, i) => (
+        <>
+          <Input aria-label={`${i + 1}행 부수`} type="number" min={0} className="text-right" value={r.qty} onChange={(e) => update(r.key, { qty: Number(e.target.value) })} disabled={r.printed} />
+          {!r.printed && r.book_id && available.has(r.book_id) && (
+            <p className={cn('mt-1 text-right text-xs break-keep whitespace-normal', qtyByBook.get(r.book_id)! > available.get(r.book_id)! ? 'font-semibold text-neg' : 'text-muted-foreground')}>
+              출고 가능 {won(available.get(r.book_id)!)}부
+            </p>
+          )}
+        </>
+      ),
+    },
+    {
+      id: 'delete',
+      header: '행 삭제',
+      hideHeader: true,
+      kind: 'action',
+      pinned: 'end',
+      cell: (r, i) => (
+        <Button
+          size="icon"
+          variant="ghost"
+          aria-label={`${i + 1}행 삭제`}
+          disabled={r.printed}
+          onClick={() => {
+            setDirty(true)
+            setRows((rs) => (rs.length > 1 ? rs.filter((x) => x.key !== r.key) : [newRow()]))
+          }}
+        >
+          <Trash2 />
+        </Button>
+      ),
+    },
+  ]
+
   async function save() {
     if (!confirmOddDate(date)) return
     const r = await saveShipment({
@@ -209,85 +299,7 @@ export default function ShipmentEntryPage() {
             </div>
           }
         >
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <ColHead className="w-10">No</ColHead>
-                <ColHead>도서코드</ColHead>
-                <ColHead>도서명</ColHead>
-                <ColHead className="text-right">정가</ColHead>
-                <ColHead className="w-24 text-right">출고율(%)</ColHead>
-                <ColHead className="text-right">단가</ColHead>
-                <ColHead className="text-right">금액</ColHead>
-                <ColHead className="w-28">구분</ColHead>
-                <ColHead className="w-24 text-right">부수</ColHead>
-                <TableHead className="w-14" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((r, i) => (
-                <TableRow key={r.key}>
-                  <TableCell className="text-center">{i + 1}</TableCell>
-                  <TableCell>
-                    <Code>{r.book_id ? bookMap.get(r.book_id)?.code : ''}</Code>
-                    {r.printed && <PrintedBadge />}
-                  </TableCell>
-                  <TableCell>
-                    <EntityCombobox label={`${i + 1}행 도서`} placeholder="도서 선택" options={bookOptions(books.data)} value={r.book_id} onChange={(v) => update(r.key, { book_id: v })} disabled={r.printed} />
-                  </TableCell>
-                  <TableCell className="text-right">{won(calc[i].listPrice)}원</TableCell>
-                  <TableCell>
-                    <Input aria-label={`${i + 1}행 출고율`} type="number" min={0} max={100} step="0.1" className="text-right" value={r.rate} onChange={(e) => update(r.key, { rate: Number(e.target.value) })} disabled={r.printed} />
-                  </TableCell>
-                  <TableCell className="text-right">{won(calc[i].unit)}원</TableCell>
-                  <TableCell className="text-right">{won(calc[i].amount)}원</TableCell>
-                  <TableCell>
-                    <Select value={r.kind} onValueChange={(v) => update(r.key, { kind: v as ShipKind })} disabled={r.printed}>
-                      <SelectTrigger aria-label={`${i + 1}행 구분`}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {SHIP_KINDS.map((k) => (
-                          <SelectItem key={k} value={k}><KindBadge kind={k} /></SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <Input aria-label={`${i + 1}행 부수`} type="number" min={0} className="text-right" value={r.qty} onChange={(e) => update(r.key, { qty: Number(e.target.value) })} disabled={r.printed} />
-                    {!r.printed && r.book_id && available.has(r.book_id) && (
-                      <p className={cn('mt-1 text-right text-xs whitespace-nowrap', qtyByBook.get(r.book_id)! > available.get(r.book_id)! ? 'font-semibold text-neg' : 'text-muted-foreground')}>
-                        출고 가능 {won(available.get(r.book_id)!)}부
-                      </p>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      aria-label={`${i + 1}행 삭제`}
-                      disabled={r.printed}
-                      onClick={() => {
-                        setDirty(true)
-                        setRows((rs) => (rs.length > 1 ? rs.filter((x) => x.key !== r.key) : [newRow()]))
-                      }}
-                    >
-                      <Trash2 />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-            <TableFooter>
-              <TableRow>
-                <TableCell colSpan={6}>합계</TableCell>
-                <TableCell className="text-right">{won(totalAmount)}원</TableCell>
-                <TableCell />
-                <TableCell className="text-right">총 {won(totalQty)}부</TableCell>
-                <TableCell />
-              </TableRow>
-            </TableFooter>
-          </Table>
+          <DataTable tableId="entry" columns={columns} rows={rows} rowKey={(r) => r.key} footerLabel="합계" />
         </ListCard>
       )}
     </>

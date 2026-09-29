@@ -1,8 +1,7 @@
-import { expect, test, type Dialog, type Page } from '@playwright/test'
+import { expect, test, type Dialog, type Locator, type Page } from '@playwright/test'
 import {
-  addBook, addPublisher, addRow, addStore, dialog, entryRow, fillRow, openEntry, pick, receive, saveEntry, saveEntryRejected,
-  stockRow, submitReturn, today, trackErrors, withPosts,
-} from './scenario-helpers'
+  addBook, addPublisher, addRow, addStore, col, dialog, entryRow, fillRow, openEntry, pick, receive, saveEntry, saveEntryRejected,
+  stockRow, submitReturn, today, trackErrors, withPosts } from './scenario-helpers'
 
 /**
  * "말도 안 되는 경우" 시나리오 (flow 다음, 같은 서버·DB).
@@ -42,8 +41,9 @@ test('Z0 준비', async ({ page }) => {
 })
 
 const BAD_QTY = ['-5', '0', '1.5', '1000000000000', '', 'e', '--']
-async function typeQty(page: Page, label: string, v: string) {
-  const input = page.getByLabel(label)
+// 목록 머리칸 손잡이('입고부수' 열 이동 등)와 겹치지 않게 입력칸이 있는 범위(폼 다이얼로그)에서 찾는다
+async function typeQty(scope: Page | Locator, label: string, v: string) {
+  const input = scope.getByLabel(label)
   await input.fill('')
   // 'e', '--' 는 숫자 칸에 fill 할 수 없어 키보드로 친다 (브라우저는 값을 빈칸으로 넘긴다)
   if (/^[\d.-]+$/.test(v) && v !== '--') await input.fill(v)
@@ -56,7 +56,7 @@ test('A1 부수: 음수·0·소수·엄청 큰 수·빈칸·e·-- — 입고·�
   await pick(page, dialog(page), '출판사', Z)
   await pick(page, dialog(page), '도서', 'Z책A')
   for (const v of BAD_QTY) {
-    await typeQty(page, '입고부수', v)
+    await typeQty(dialog(page), '입고부수', v)
     await dialog(page).getByRole('button', { name: '저장' }).click()
     await expect(formError(page)).toHaveText('입고부수는 1 이상 999,999 이하 정수로 입력하세요.')
   }
@@ -68,7 +68,7 @@ test('A1 부수: 음수·0·소수·엄청 큰 수·빈칸·e·-- — 입고·�
   await pick(page, dialog(page), '서점', 'Y서점일')
   await pick(page, dialog(page), '도서', 'Z책A')
   for (const v of BAD_QTY) {
-    await typeQty(page, '부수', v)
+    await typeQty(dialog(page), '부수', v)
     await dialog(page).getByRole('button', { name: '저장' }).click()
     await expect(formError(page)).toHaveText('부수는 1 이상 999,999 이하 정수로 입력하세요.')
   }
@@ -82,9 +82,9 @@ test('A1 부수: 음수·0·소수·엄청 큰 수·빈칸·e·-- — 입고·�
   }
 
   const row = await stockRow(page, Z, 'Z책A')
-  await expect(row.getByRole('cell').nth(2)).toHaveText('100')
-  await expect(row.getByRole('cell').nth(3)).toHaveText('0')
-  await expect(row.getByRole('cell').nth(4)).toHaveText('0')
+  await expect(col(row, 'received')).toHaveText('100')
+  await expect(col(row, 'shipped')).toHaveText('0')
+  await expect(col(row, 'returned')).toHaveText('0')
 })
 
 test('A2 정가(음수·소수·큰 수) 거절, 출고율 0·음수·100 초과 거절, 62.5 허용', async ({ page }) => {
@@ -127,7 +127,7 @@ test('A3 날짜: 빈 날짜 거절, 1900·2999 년은 ⚠️ 허용', async ({ p
   await receive(page, Z, 'Z미래책', 1, '1900-01-01')
   await receive(page, Z, 'Z미래책', 1, '2999-12-31')
   const row = await stockRow(page, Z, 'Z미래책')
-  await expect(row.getByRole('cell').nth(2)).toHaveText('2')
+  await expect(col(row, 'received')).toHaveText('2')
 })
 
 test('A4 이름: 공백만 거절, 앞뒤 공백 trim, 101자 거절, <script>·이모지는 글자 그대로(화면·인쇄물)', async ({ page }) => {
@@ -200,7 +200,7 @@ test('B1 반품: 출고한 적 없는 서점 반품·출고보다 많은 반품 
   await expect(dialog(page)).toBeHidden()
 
   const row = await stockRow(page, Z, 'Z반품책')
-  await expect(row.getByRole('cell').nth(5)).toHaveText('20') // 입고 20 − 출고 5 + 반품 5
+  await expect(col(row, 'stock')).toHaveText('20') // 입고 20 − 출고 5 + 반품 5
 })
 
 test('B2 🔧 날짜 역전: 내년 입고로 오늘 출고 막힘, 출고일 이전 날짜 반품 막힘', async ({ page }) => {
@@ -217,7 +217,7 @@ test('B2 🔧 날짜 역전: 내년 입고로 오늘 출고 막힘, 출고일 �
   await expect(formError(page)).toHaveText("'Z미래책'은 'Y서점삼'에 2020-01-01까지 반품 가능한 부수가 0부입니다.")
   await dialog(page).getByRole('button', { name: '취소' }).click()
   const row = await stockRow(page, Z, 'Z미래책')
-  await expect(row.getByRole('cell').nth(5)).toHaveText('11')
+  await expect(col(row, 'stock')).toHaveText('11')
 })
 
 test('B3 같은 도서 여러 행: 합계로 막고, 줄이면 저장', async ({ page }) => {
@@ -254,7 +254,7 @@ test('B4 🔧 두 탭 동시 편집: 오래된 탭의 저장은 막히고, 다�
   await expect(page.locator('main tbody tr')).toHaveCount(3)
   await expect(page.getByLabel('3행 부수')).toHaveValue('5')
   const row = await stockRow(page, Z, 'Z책B')
-  await expect(row.getByRole('cell').nth(3)).toHaveText('5')
+  await expect(col(row, 'shipped')).toHaveText('5')
   otherErrors.assertClean()
   await other.close()
 })
@@ -344,12 +344,12 @@ test('B9 🔧 오늘과 1년 넘게 차이 나는 날짜는 확인을 받는다 
   expect(confirms[0]).toBe('입력한 날짜(2020-01-01)가 오늘과 1년 이상 차이 납니다. 이 날짜가 맞나요?')
   await expect(dialog(page)).toBeVisible() // 취소 → 창이 그대로, 저장 안 됨
   let row = await stockRow(page, Z, 'Z반품책')
-  await expect(row.getByRole('cell').nth(2)).toHaveText('20')
+  await expect(col(row, 'received')).toHaveText('20')
 
   await receive(page, Z, 'Z반품책', 7, '2020-01-01') // 두 번째 확인은 수락 → 저장
   expect(confirms).toHaveLength(2)
   row = await stockRow(page, Z, 'Z반품책')
-  await expect(row.getByRole('cell').nth(2)).toHaveText('27')
+  await expect(col(row, 'received')).toHaveText('27')
 })
 
 test('B10 🔧 기간 필터: 시작일이 종료일보다 늦어지는 값은 적용하지 않고 알린다 (입고·반품)', async ({ page }) => {
