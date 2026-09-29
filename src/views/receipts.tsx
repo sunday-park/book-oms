@@ -108,7 +108,7 @@ export default function ReceiptsPage() {
           <TableBody>
             {list.data.map((r) => (
               <SelectableRow key={r.id} selected={r.id === selId} onSelect={() => setSelId(r.id)}>
-                <TableCell className="font-mono text-sm">{r.date}</TableCell>
+                <TableCell className="tabular-nums">{r.date}</TableCell>
                 <TableCell>{r.publisher_name}</TableCell>
                 <TableCell><Code>{r.book_code}</Code></TableCell>
                 <TableCell className="font-semibold">{r.book_name}</TableCell>

@@ -105,7 +105,7 @@ export default function SettingsPage() {
         <div className="grid gap-5 px-6 py-5">
           <div className="grid gap-2">
             <div className="text-[15px] font-medium text-secondary-foreground">DB 파일 위치</div>
-            <code data-testid="db-path" className="rounded-lg border bg-muted px-4 py-3 font-mono text-base break-all select-all">
+            <code data-testid="db-path" className="rounded-lg border bg-muted px-4 py-3 font-sans text-base tabular-nums break-all select-all">
               {info?.path ?? '…'}
             </code>
             <div className="text-[15px] text-muted-foreground tabular-nums">
@@ -153,7 +153,7 @@ export default function SettingsPage() {
           <TableBody>
             {backups.map((b) => (
               <TableRow key={b.name}>
-                <TableCell className="font-mono text-base">{b.name}</TableCell>
+                <TableCell className="tabular-nums">{b.name}</TableCell>
                 <TableCell className="tabular-nums">{dateTime(b.mtime)}</TableCell>
                 <TableCell className="text-right tabular-nums">{fileSize(b.size)}</TableCell>
                 <TableCell className="text-center">
@@ -178,7 +178,7 @@ export default function SettingsPage() {
           <DialogHeader>
             <DialogTitle>백업으로 복원</DialogTitle>
             <DialogDescription className="text-base">
-              현재 데이터를 <span className="font-mono font-semibold text-foreground">{restoring}</span> 백업으로 바꿉니다. 되돌리려면 자동으로 만들어지는
+              현재 데이터를 <span className="font-semibold text-foreground">{restoring}</span> 백업으로 바꿉니다. 되돌리려면 자동으로 만들어지는
               &apos;-before-restore&apos; 백업으로 다시 복원해야 합니다.
             </DialogDescription>
           </DialogHeader>

@@ -68,7 +68,7 @@ export function DeleteButton({ disabled, onClick }: { disabled: boolean; onClick
 }
 
 export function Code({ children }: { children: ReactNode }) {
-  return <span className="font-mono text-sm text-muted-foreground">{children}</span>
+  return <span className="text-muted-foreground tabular-nums">{children}</span>
 }
 
 export function EmptyRow({ show, cols }: { show: boolean; cols: number }) {

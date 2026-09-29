@@ -63,7 +63,7 @@ export default function ShipmentStatusPage() {
               <TableRow key={r.id}>
                 <TableCell><Code>{r.book_code}</Code></TableCell>
                 <TableCell className="font-semibold">{r.book_name}</TableCell>
-                <TableCell className="font-mono text-sm">{r.date}</TableCell>
+                <TableCell className="tabular-nums">{r.date}</TableCell>
                 <TableCell>{r.publisher_name}</TableCell>
                 <TableCell>{r.bookstore_name}</TableCell>
                 <TableCell><KindBadge kind={r.kind} /></TableCell>

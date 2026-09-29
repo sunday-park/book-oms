@@ -86,9 +86,9 @@ export default function PublishersPage() {
               <SelectableRow key={p.id} selected={p.id === selId} onSelect={() => setSelId(p.id)}>
                 <TableCell><Code>{p.code}</Code></TableCell>
                 <TableCell className="font-semibold">{p.name}</TableCell>
-                <TableCell className="font-mono text-sm">{p.phone}</TableCell>
-                <TableCell className="font-mono text-sm">{p.fax}</TableCell>
-                <TableCell className="font-mono text-sm">{p.biz_no}</TableCell>
+                <TableCell className="tabular-nums">{p.phone}</TableCell>
+                <TableCell className="tabular-nums">{p.fax}</TableCell>
+                <TableCell className="tabular-nums">{p.biz_no}</TableCell>
               </SelectableRow>
             ))}
             <EmptyRow show={rows.length === 0} cols={5} />

@@ -114,7 +114,7 @@ export default function BooksPage() {
                 <TableCell colSpan={4} className="sticky top-0 z-10 h-[50px]! border-r-0! bg-group-head">
                   <div className="flex items-center gap-2.5">
                     <span className="font-semibold text-emphasis">{g[0].publisher_name}</span>
-                    <span className="rounded-md border bg-card px-2 py-0.5 font-mono text-xs text-muted-foreground">{g[0].publisher_code}</span>
+                    <span className="rounded-md border bg-card px-2 py-0.5 text-xs text-muted-foreground tabular-nums">{g[0].publisher_code}</span>
                     <span className="ml-auto text-[15px] text-muted-foreground">{g.length}종</span>
                   </div>
                 </TableCell>

@@ -116,7 +116,7 @@ export function AppSidebar() {
           <settings.icon className="size-[18px] shrink-0" strokeWidth={1.8} />
           {!collapsed && settings.label}
         </Link>
-        {!collapsed && <span className="ml-auto font-mono text-xs text-sidebar-muted">v1.0.0</span>}
+        {!collapsed && <span className="ml-auto text-xs text-sidebar-muted tabular-nums">v1.0.0</span>}
         <button
           type="button"
           onClick={toggle}
