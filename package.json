@@ -11,7 +11,8 @@
     "start": "next start -H 127.0.0.1",
     "lint": "eslint",
     "test": "vitest run",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "app": "node scripts/app.mjs"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",

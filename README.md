@@ -30,6 +30,7 @@ npm run dev
 
 브라우저에서 <http://127.0.0.1:3000> 접속. (Git이 없으면 GitHub의 **Code › Download ZIP**으로 받아 압축을 풀고 같은 폴더에서 `npm install` → `npm run dev`)
 
+- **실사용은 `npm run app` 권장** — 빌드 후 정식 모드로 실행해 페이지 이동이 즉시 반응합니다(첫 실행 시 빌드 30초~1분). `npm run dev`는 화면 수정용 개발 모드입니다.
 - 최초 실행 시 `data/book-oms.db`가 자동 생성됩니다. **백업은 이 파일을 복사**하면 됩니다.
 - 설치(`npm install`)에만 인터넷이 필요하고, 이후에는 오프라인으로 동작합니다.
 - 테스트: `npm test`(단위) · `npm run e2e`(브라우저)

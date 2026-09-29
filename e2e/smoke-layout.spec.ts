@@ -31,6 +31,8 @@ test('레이아웃(사이드바) 스모크: 콘솔/페이지 에러 없이 메�
   }
 
   // 접기: 아이콘만 남고 메뉴 링크는 이름(aria-label)으로 계속 찾을 수 있다
+  // 로딩 화면 뒤 실제 페이지(검색 카드 [조회])가 뜬 뒤에 눌러야 클릭이 반영된다
+  await expect(page.getByRole('button', { name: '조회' })).toBeVisible()
   await sidebar.getByRole('button', { name: '메뉴 접기' }).click()
   await expect(sidebar.getByText('도서 재고관리')).toBeHidden()
   await expect(sidebar.getByText('관리', { exact: true })).toBeHidden()

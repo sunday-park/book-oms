@@ -6,11 +6,12 @@ import type { Result } from '@/lib/result'
 
 export const none = <T,>(data: T): Promise<Result<T>> => Promise.resolve({ ok: true, data })
 
-/** deps 가 바뀌면 150ms 뒤 자동 조회(입력 즉시 필터링), reload() 는 [조회] 버튼용 즉시 조회 */
+/** 첫 조회는 즉시, 이후 deps 가 바뀌면 150ms 뒤 자동 조회(입력 즉시 필터링), reload() 는 [조회] 버튼용 즉시 조회 */
 export function useQuery<T>(fetcher: () => Promise<Result<T>>, deps: unknown[], initial: T) {
   const [data, setData] = useState<T>(initial)
   const fetcherRef = useRef(fetcher)
   fetcherRef.current = fetcher
+  const loadedRef = useRef(false)
 
   const reload = useCallback(async () => {
     const r = await fetcherRef.current()
@@ -19,7 +20,8 @@ export function useQuery<T>(fetcher: () => Promise<Result<T>>, deps: unknown[], 
   }, [])
 
   useEffect(() => {
-    const t = setTimeout(reload, 150)
+    const t = setTimeout(reload, loadedRef.current ? 150 : 0)
+    loadedRef.current = true
     return () => clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps)
