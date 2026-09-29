@@ -1,7 +1,7 @@
 import { type DB, all, get, run, tx } from '@/lib/db'
 import { calcAmount, calcUnitPrice, SHIP_KINDS, type ShipKind } from '@/lib/domain'
 import { josa } from '@/lib/josa'
-import { getBook } from '@/lib/repo/master'
+import { getBook, requireRow } from '@/lib/repo/master'
 import { getStock } from '@/lib/repo/reports'
 import { AppError } from '@/lib/result'
 import { requireDate, requireId, requireQty } from '@/lib/validate'
@@ -48,7 +48,20 @@ export function createReceipt(db: DB, input: { date: string; book_id: number | n
   return run(db, 'INSERT INTO receipts (date, book_id, qty) VALUES (?, ?, ?)', date, book.id, qty)
 }
 
+/** 입고·반품을 지우면 재고가 그만큼 줄어든다 — 음수가 되면 거절 */
+function requireStockAfterRemoval(db: DB, what: string, row: { book_id: number; book_name: string; qty: number }) {
+  const resulting = getStock(db, row.book_id) - row.qty
+  if (resulting < 0) throw new AppError(`${what}${josa(what, '을', '를')} 삭제하면 '${row.book_name}' 재고가 ${resulting}부가 되어 삭제할 수 없습니다.`)
+}
+
 export function deleteReceipt(db: DB, id: number) {
+  const row = get<{ book_id: number; book_name: string; qty: number }>(
+    db,
+    'SELECT r.book_id, b.name AS book_name, r.qty FROM receipts r JOIN books b ON b.id = r.book_id WHERE r.id = ?',
+    id,
+  )
+  if (!row) throw new AppError('입고 내역을 찾을 수 없습니다.')
+  requireStockAfterRemoval(db, '입고', row)
   run(db, 'DELETE FROM receipts WHERE id = ?', id)
 }
 
@@ -96,10 +109,29 @@ export function createReturn(
   const bookstoreId = requireId(input.bookstore_id, '서점')
   const book = requireBookOf(db, input.book_id, publisherId)
   const qty = requireQty(input.qty)
+  // 그 서점에 출고한 부수 − 이미 반품한 부수까지만 반품할 수 있다 (반품이 재고를 부풀리지 않도록)
+  const store = get<{ name: string }>(db, 'SELECT name FROM bookstores WHERE id = ?', bookstoreId)
+  if (!store) throw new AppError('서점을 찾을 수 없습니다.')
+  const { shipped, returned } = get<{ shipped: number; returned: number }>(
+    db,
+    `SELECT COALESCE((SELECT SUM(i.qty) FROM shipment_items i JOIN shipments s ON s.id = i.shipment_id WHERE s.bookstore_id = ? AND i.book_id = ?), 0) AS shipped,
+            COALESCE((SELECT SUM(qty) FROM returns WHERE bookstore_id = ? AND book_id = ?), 0) AS returned`,
+    bookstoreId, book.id, bookstoreId, book.id,
+  )!
+  if (qty > shipped - returned) {
+    throw new AppError(`'${book.name}'${josa(book.name, '은', '는')} '${store.name}'에 반품 가능한 부수가 ${shipped - returned}부입니다.`)
+  }
   return run(db, 'INSERT INTO returns (date, publisher_id, bookstore_id, book_id, qty) VALUES (?, ?, ?, ?, ?)', date, publisherId, bookstoreId, book.id, qty)
 }
 
 export function deleteReturn(db: DB, id: number) {
+  const row = get<{ book_id: number; book_name: string; qty: number }>(
+    db,
+    'SELECT r.book_id, b.name AS book_name, r.qty FROM returns r JOIN books b ON b.id = r.book_id WHERE r.id = ?',
+    id,
+  )
+  if (!row) throw new AppError('반품 내역을 찾을 수 없습니다.')
+  requireStockAfterRemoval(db, '반품', row)
   run(db, 'DELETE FROM returns WHERE id = ?', id)
 }
 
@@ -135,7 +167,7 @@ export function getShipment(db: DB, date: string, publisherId: number, bookstore
   return { id, items: all<ShipmentItem>(db, `${ITEM_SELECT} WHERE i.shipment_id = ? ORDER BY i.id`, id) }
 }
 
-export function saveShipment(db: DB, input: ShipmentInput): { id: number; warnings: string[] } {
+export function saveShipment(db: DB, input: ShipmentInput): { id: number } {
   const date = requireDate(input.date)
   const publisherId = requireId(input.publisher_id, '출판사')
   const bookstoreId = requireId(input.bookstore_id, '서점')
@@ -199,18 +231,26 @@ export function saveShipment(db: DB, input: ShipmentInput): { id: number; warnin
       if (existing.get(prevId)!.printed_at) throw new AppError('이미 인쇄된 행은 삭제할 수 없습니다.')
       run(db, 'DELETE FROM shipment_items WHERE id = ?', prevId)
     }
+
+    // 반영 후 재고가 음수가 되는 도서가 있으면 거절(롤백) — 같은 도서 여러 행은 합산해 비교한다.
+    // 이 출고에서 부수가 늘지 않은 도서는 재고가 줄지 않았으므로 검사하지 않는다(기존 데이터가 이미 음수여도 저장은 가능).
+    const sum = (list: { book_id: number; qty: number }[]) =>
+      list.reduce((m, x) => m.set(x.book_id, (m.get(x.book_id) ?? 0) + x.qty), new Map<number, number>())
+    const requested = sum(rows.map((r) => ({ book_id: r.book.id, qty: r.qty })))
+    const before = sum([...existing.values()])
+    for (const r of rows) {
+      const total = requested.get(r.book.id)!
+      if (total <= (before.get(r.book.id) ?? 0)) continue
+      const stock = getStock(db, r.book.id)
+      if (stock < 0) throw new AppError(`${r.rowNum}행: '${r.book.name}' 출고 가능 ${stock + total}부, 입력 ${total}부`)
+    }
     return shipmentId
   })
-
-  const books = new Map(rows.map((r) => [r.book.id, r.book]))
-  const warnings = [...books.values()]
-    .map((b) => ({ name: b.name, stock: getStock(db, b.id) }))
-    .filter((x) => x.stock < 0)
-    .map((x) => `${x.name}: 재고 ${x.stock}부`)
-  return { id, warnings }
+  return { id }
 }
 
 export function deleteShipment(db: DB, id: number) {
+  requireRow(db, 'shipments', id, '출고 명세')
   if (get(db, 'SELECT 1 FROM shipment_items WHERE shipment_id = ? AND printed_at IS NOT NULL LIMIT 1', id)) {
     throw new AppError('이미 인쇄된 명세가 있어 삭제할 수 없습니다.')
   }

@@ -1,5 +1,6 @@
 import { type DB, all, get, run, tx } from '@/lib/db'
 import { formatBookCode } from '@/lib/domain'
+import { josa } from '@/lib/josa'
 import { AppError } from '@/lib/result'
 import { requireId, requireText } from '@/lib/validate'
 
@@ -20,6 +21,16 @@ export type Book = {
 }
 export type BookInput = { publisher_id: number | null; name: string; list_price: number }
 
+/** 없는 id 로 수정·삭제하면 조용히 넘어가지 않고 알린다 */
+export function requireRow(db: DB, table: string, id: number, label: string) {
+  if (!get(db, `SELECT 1 FROM ${table} WHERE id = ?`, id)) throw new AppError(`${label}${josa(label, '을', '를')} 찾을 수 없습니다.`)
+}
+
+/** 코드는 대소문자만 달라도 같은 코드로 본다 (P01 / p01) */
+function requireUniqueCode(db: DB, table: string, code: string, id?: number) {
+  if (get(db, `SELECT 1 FROM ${table} WHERE lower(code) = lower(?) AND id IS NOT ?`, code, id ?? null)) throw new AppError('이미 등록된 코드입니다.')
+}
+
 // ── 출판사 ──
 export function listPublishers(db: DB) {
   return all<Publisher>(db, 'SELECT id, code, name, phone, fax, biz_no FROM publishers ORDER BY code')
@@ -31,15 +42,18 @@ export function savePublisher(db: DB, input: PublisherInput, id?: number) {
   const fax = input.fax.trim()
   const bizNo = input.biz_no?.trim() || null
   if (id) {
+    requireRow(db, 'publishers', id, '출판사')
     // 출판사코드는 도서코드에 쓰이므로 수정하지 않는다
     run(db, 'UPDATE publishers SET name = ?, phone = ?, fax = ?, biz_no = ? WHERE id = ?', name, phone, fax, bizNo, id)
     return id
   }
-  const code = requireText(input.code, '출판사코드')
+  const code = requireText(input.code, '출판사코드', 20)
+  requireUniqueCode(db, 'publishers', code)
   return run(db, 'INSERT INTO publishers (code, name, phone, fax, biz_no) VALUES (?, ?, ?, ?, ?)', code, name, phone, fax, bizNo)
 }
 
 export function deletePublisher(db: DB, id: number) {
+  requireRow(db, 'publishers', id, '출판사')
   if (get(db, 'SELECT 1 FROM books WHERE publisher_id = ? LIMIT 1', id)) throw new AppError('소속 도서가 있어 삭제할 수 없습니다.')
   run(db, 'DELETE FROM publishers WHERE id = ?', id)
 }
@@ -50,9 +64,11 @@ export function listBookstores(db: DB) {
 }
 
 export function saveBookstore(db: DB, input: BookstoreInput, id?: number) {
-  const code = requireText(input.code, '서점코드')
+  const code = requireText(input.code, '서점코드', 20)
   const name = requireText(input.name, '서점명')
   const region = requireText(input.region, '지역')
+  if (id) requireRow(db, 'bookstores', id, '서점')
+  requireUniqueCode(db, 'bookstores', code, id)
   if (id) {
     run(db, 'UPDATE bookstores SET code = ?, name = ?, region = ? WHERE id = ?', code, name, region, id)
     return id
@@ -61,6 +77,7 @@ export function saveBookstore(db: DB, input: BookstoreInput, id?: number) {
 }
 
 export function deleteBookstore(db: DB, id: number) {
+  requireRow(db, 'bookstores', id, '서점')
   const used = get(db, 'SELECT 1 FROM shipments WHERE bookstore_id = ? UNION ALL SELECT 1 FROM returns WHERE bookstore_id = ? LIMIT 1', id, id)
   if (used) throw new AppError('출고·반품 이력이 있어 삭제할 수 없습니다.')
   run(db, 'DELETE FROM bookstores WHERE id = ?', id)
@@ -83,7 +100,7 @@ export function getBook(db: DB, id: number) {
 }
 
 function requirePrice(v: number) {
-  if (!Number.isInteger(v) || v < 0) throw new AppError('정가는 0 이상 정수로 입력하세요.')
+  if (!Number.isInteger(v) || v < 0 || v > 9_999_999) throw new AppError('정가는 0 이상 9,999,999 이하 정수로 입력하세요.')
   return v
 }
 
@@ -109,10 +126,12 @@ export function createBook(db: DB, input: BookInput) {
 }
 
 export function updateBook(db: DB, id: number, input: { name: string; list_price: number }) {
+  requireRow(db, 'books', id, '도서')
   run(db, 'UPDATE books SET name = ?, list_price = ? WHERE id = ?', requireText(input.name, '도서명'), requirePrice(input.list_price), id)
 }
 
 export function deleteBook(db: DB, id: number) {
+  requireRow(db, 'books', id, '도서')
   const used = get(
     db,
     `SELECT 1 FROM receipts WHERE book_id = ? UNION ALL SELECT 1 FROM shipment_items WHERE book_id = ?

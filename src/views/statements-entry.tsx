@@ -15,13 +15,14 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { none, useQuery } from '@/hooks/use-query'
-import { deleteShipment, getShipment, saveShipment } from '@/lib/actions/inventory'
+import { deleteShipment, getShipment, listStock, saveShipment } from '@/lib/actions/inventory'
 import { listBookstores, listBooks, listPublishers } from '@/lib/actions/master'
 import { calcAmount, calcUnitPrice, DEFAULT_RATE, SHIP_KINDS, type ShipKind } from '@/lib/domain'
 import { today, won } from '@/lib/format'
 import { bookOptions, pubOptions, storeOptions } from '@/lib/options'
 import type { Book, Bookstore, Publisher } from '@/lib/repo/master'
 import { setUnsaved } from '@/lib/unsaved'
+import { cn } from '@/lib/utils'
 
 type Row = {
   key: string
@@ -43,6 +44,8 @@ export default function ShipmentEntryPage() {
   const [rows, setRows] = useState<Row[]>(() => [newRow()])
   const [error, setError] = useState('')
   const [dirty, setDirty] = useState(false)
+  // 도서별 출고 가능 부수 = 현재고 + 이 출고에 저장돼 있던 부수 (다시 저장하면 그만큼은 되돌려지므로)
+  const [available, setAvailable] = useState(new Map<number, number>())
   const reqRef = useRef(0)
   const pubs = useQuery(listPublishers, [], [] as Publisher[], 'publishers')
   const stores = useQuery(listBookstores, [], [] as Bookstore[], 'bookstores')
@@ -59,9 +62,13 @@ export default function ShipmentEntryPage() {
       setDirty(false)
       return
     }
-    const r = await getShipment(date, pubId, storeId)
+    const [r, s] = await Promise.all([getShipment(date, pubId, storeId), listStock(pubId)])
     if (seq !== reqRef.current) return // 이후 요청이 이미 시작됨 — 이 결과는 버림
     if (!r.ok) return void toast.error(r.error)
+    if (!s.ok) return void toast.error(s.error)
+    const avail = new Map(s.data.map((x) => [x.book_id, x.stock]))
+    for (const it of r.data?.items ?? []) avail.set(it.book_id, (avail.get(it.book_id) ?? 0) + it.qty)
+    setAvailable(avail)
     setShipmentId(r.data?.id ?? null)
     setRows(
       r.data?.items.length
@@ -105,6 +112,8 @@ export default function ShipmentEntryPage() {
     return { listPrice, unit, amount: calcAmount(unit, r.qty) }
   })
   const totalQty = rows.reduce((s, r) => s + r.qty, 0)
+  // 같은 도서가 여러 행이면 합계로 비교한다 (서버 검사와 동일)
+  const qtyByBook = rows.reduce((m, r) => (r.book_id ? m.set(r.book_id, (m.get(r.book_id) ?? 0) + r.qty) : m), new Map<number, number>())
   const totalAmount = calc.reduce((s, c) => s + c.amount, 0)
   const update = (key: string, patch: Partial<Row>) => {
     setDirty(true)
@@ -125,7 +134,6 @@ export default function ShipmentEntryPage() {
     })
     if (!r.ok) return setError(r.error)
     toast.success('저장했습니다.')
-    r.data.warnings.forEach((w) => toast.warning(`재고 부족 — ${w}`))
     void load()
   }
   async function remove() {
@@ -242,6 +250,11 @@ export default function ShipmentEntryPage() {
                   </TableCell>
                   <TableCell>
                     <Input aria-label={`${i + 1}행 부수`} type="number" min={0} className="text-right" value={r.qty} onChange={(e) => update(r.key, { qty: Number(e.target.value) })} disabled={r.printed} />
+                    {!r.printed && r.book_id && available.has(r.book_id) && (
+                      <p className={cn('mt-1 text-right text-xs whitespace-nowrap', qtyByBook.get(r.book_id)! > available.get(r.book_id)! ? 'font-semibold text-neg' : 'text-muted-foreground')}>
+                        출고 가능 {won(available.get(r.book_id)!)}부
+                      </p>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Button

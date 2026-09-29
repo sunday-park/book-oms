@@ -7,6 +7,9 @@ const D = '2026-09-28'
 const ship = (db: ReturnType<typeof seed>['db'], date: string, publisher_id: number, bookstore_id: number, lines: [number, number][]) =>
   saveShipment(db, { date, publisher_id, bookstore_id, items: lines.map(([book_id, qty]) => ({ book_id, qty, rate: 60, kind: '위탁' as const })) })
 
+const stockUp = (db: ReturnType<typeof seed>['db'], ...bookIds: number[]) =>
+  bookIds.forEach((book_id) => createReceipt(db, { date: D, book_id, qty: 100 }))
+
 describe('재고', () => {
   it('입고(여러 날) − 출고 + 반품', () => {
     const { db, p1, s1, b1, b2 } = seed()
@@ -24,6 +27,7 @@ describe('재고', () => {
 describe('출고 현황', () => {
   it('날짜로 거르고 도서코드 → 도서명 → 날짜 순으로 정렬', () => {
     const { db, p1, s1, s2, b1, b2 } = seed()
+    stockUp(db, b1, b2)
     ship(db, D, p1, s1, [[b2, 3], [b1, 5]])
     ship(db, D, p1, s2, [[b1, 2]])
     ship(db, '2026-09-27', p1, s1, [[b1, 9]])
@@ -39,6 +43,7 @@ describe('출고 현황', () => {
 describe('출고증', () => {
   it('선택한 날짜·출판사만 서점별로 묶고 소계를 낸다', () => {
     const { db, p1, p2, s1, s2, b1, b2, b3 } = seed()
+    stockUp(db, b1, b2, b3)
     ship(db, D, p1, s1, [[b1, 5], [b2, 3]])
     ship(db, D, p1, s2, [[b1, 2]])
     ship(db, D, p2, s1, [[b3, 7]])
