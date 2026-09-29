@@ -15,5 +15,6 @@ export default defineConfig({
   projects: [
     { name: 'smoke', testMatch: /smoke-.*\.spec\.ts/ },
     { name: 'flow', testMatch: /flow\.spec\.ts/, dependencies: ['smoke'] },
+    { name: 'scenario', testMatch: /scenario(-absurd)?\.spec\.ts/, dependencies: ['flow'] },
   ],
 })
