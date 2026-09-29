@@ -21,13 +21,13 @@ export function AppSidebar() {
           <div className="mt-1 font-mono text-xs text-slate-400" suppressHydrationWarning>{today()}</div>
         </div>
       </div>
-      <nav className="flex-1 overflow-y-auto px-2 pb-4">
+      <nav className="flex-1 overflow-y-auto px-2 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {NAV.map((m, si) => (
-          <div key={m.title} className={cn('pt-5', si > 0 && 'mt-2')}>
+          <div key={m.title} className={cn('pt-[clamp(8px,1.6vh,20px)]', si > 0 && 'mt-[clamp(2px,0.6vh,8px)]')}>
             <div className="mb-2 px-3.5 text-[13px] font-medium text-slate-500">{m.title}</div>
             {m.groups.map((items, gi) => (
               <div key={gi} className="space-y-1">
-                {gi > 0 && <div className="mx-3.5 my-3 border-t border-sidebar-border" />}
+                {gi > 0 && <div className="mx-3.5 my-[clamp(4px,1vh,12px)] border-t border-sidebar-border" />}
                 {items.map((it) => {
                   const Icon = it.icon
                   const active = pathname === it.href
@@ -40,7 +40,7 @@ export function AppSidebar() {
                         if (hasUnsaved() && !confirm('저장하지 않은 변경 내용이 있습니다. 버리고 이동할까요?')) e.preventDefault()
                       }}
                       className={cn(
-                        'flex h-[50px] items-center gap-3 rounded-lg px-3.5 text-lg font-semibold transition-colors',
+                        'flex h-[clamp(34px,4.4vh,50px)] items-center gap-3 rounded-lg px-3.5 text-lg font-semibold transition-colors',
                         active ? 'bg-sidebar-primary text-white' : 'hover:bg-sidebar-accent hover:text-white',
                       )}
                     >
