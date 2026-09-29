@@ -8,7 +8,7 @@ const ship = (db: ReturnType<typeof seed>['db'], date: string, publisher_id: num
   saveShipment(db, { date, publisher_id, bookstore_id, items: lines.map(([book_id, qty]) => ({ book_id, qty, rate: 60, kind: '위탁' as const })) })
 
 const stockUp = (db: ReturnType<typeof seed>['db'], ...bookIds: number[]) =>
-  bookIds.forEach((book_id) => createReceipt(db, { date: D, book_id, qty: 100 }))
+  bookIds.forEach((book_id) => createReceipt(db, { date: '2026-09-01', book_id, qty: 100 }))
 
 describe('재고', () => {
   it('입고(여러 날) − 출고 + 반품', () => {

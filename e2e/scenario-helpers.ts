@@ -50,9 +50,10 @@ export async function withPosts(page: Page, n: number, action: () => Promise<voi
  * 그 전에 날짜 칸을 채우면 React 상태에 반영되지 않고 오늘 날짜로 되돌아갈 수 있다.
  */
 export async function gotoReady(page: Page, url: string) {
-  await withPosts(page, 1, async () => {
-    await page.goto(url)
-  })
+  // 이전 화면에서 늦게 도착한 조회 응답은 세지 않는다 (서버 동작은 현재 화면 주소로 POST 된다)
+  const ready = page.waitForResponse((r) => r.request().method() === 'POST' && new URL(r.url()).pathname === url)
+  await page.goto(url)
+  await ready
 }
 
 // 폼 다이얼로그 (콤보박스 팝오버도 role=dialog 라 data-slot 으로 구분)

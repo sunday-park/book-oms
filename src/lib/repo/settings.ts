@@ -1,10 +1,13 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import { backupDir, createBackup } from '@/lib/backup'
 import { type DB, get } from '@/lib/db'
 import { AppError } from '@/lib/result'
 
-/** 백업 파일 이름: book-oms-YYYYMMDD-HHmmss[-N][-before-restore].db */
-const BACKUP_NAME_RE = /^book-oms-\d{8}-\d{6}(?:-\d+)?(?:-before-restore)?\.db$/
+export { backupDir, backupFileName, createBackup } from '@/lib/backup'
+
+/** 백업 파일 이름: book-oms-YYYYMMDD-HHmmss[-N][-before-restore | -before-migrate-vN].db */
+const BACKUP_NAME_RE = /^book-oms-\d{8}-\d{6}(?:-\d+)?(?:-before-restore|-before-migrate-v\d+)?\.db$/
 
 export type Counts = {
   publishers: number
@@ -18,15 +21,6 @@ export type Counts = {
 export type DbInfo = { path: string; size: number; mtime: number; counts: Counts }
 export type BackupFile = { name: string; size: number; mtime: number }
 
-export const backupDir = (dbPath: string) => path.join(path.dirname(dbPath), 'backups')
-
-const pad = (n: number) => String(n).padStart(2, '0')
-export function backupFileName(d: Date, suffix = '') {
-  const date = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`
-  const time = `${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`
-  return `book-oms-${date}-${time}${suffix}.db`
-}
-
 const TABLES = ['publishers', 'bookstores', 'books', 'receipts', 'shipments', 'shipment_items', 'returns'] as const
 
 export function countRecords(db: DB): Counts {
@@ -37,16 +31,6 @@ export function countRecords(db: DB): Counts {
 export function getDbInfo(db: DB, dbPath: string): DbInfo {
   const st = fs.statSync(dbPath)
   return { path: dbPath, size: st.size, mtime: st.mtimeMs, counts: countRecords(db) }
-}
-
-/** 연결을 연 채로 VACUUM INTO 로 일관된 사본을 만든다. 만든 파일 이름을 돌려준다. */
-export function createBackup(db: DB, dbPath: string, now = new Date(), suffix = '') {
-  const dir = backupDir(dbPath)
-  fs.mkdirSync(dir, { recursive: true })
-  let name = backupFileName(now, suffix)
-  for (let n = 2; fs.existsSync(path.join(dir, name)); n++) name = backupFileName(now, `-${n}${suffix}`)
-  db.exec(`VACUUM INTO '${path.join(dir, name).replaceAll("'", "''")}'`)
-  return name
 }
 
 /** 백업 목록 (최신순) */

@@ -1,7 +1,7 @@
 import { expect, test, type Dialog } from '@playwright/test'
 import {
   addBook, addPublisher, addRow, addStore, dialog, entryRow, fillRow, gotoReady, num, openEntry, pick, receive, saveEntry, saveEntryRejected,
-  stockRow, submitReturn, trackErrors,
+  stockRow, submitReturn, today, trackErrors,
 } from './scenario-helpers'
 
 /**
@@ -42,7 +42,7 @@ test('S1 입고 없이 출고 → 저장이 막히고, 새로고침 후에도 �
   await expect(hint).toHaveText('출고 가능 0부')
   await expect(hint).toHaveClass(/text-neg/)
 
-  await saveEntryRejected(page, "1행: 'S1책' 출고 가능 0부, 입력 3부")
+  await saveEntryRejected(page, `1행: 'S1책' ${today()} 기준 출고 가능 0부, 입력 3부`)
   await expect(page.getByText('저장했습니다.')).toHaveCount(0)
 
   await page.reload()
@@ -68,7 +68,7 @@ test('S2 입고 10 → 출고 10 → 1부 추가 막힘 → 반품 3 → 3부 �
 
   await addRow(page, 2, 'S2책', 1)
   await expect(entryRow(page, 2).getByText(/출고 가능/)).toHaveClass(/text-neg/)
-  await saveEntryRejected(page, "1행: 'S2책' 출고 가능 10부, 입력 11부")
+  await saveEntryRejected(page, `1행: 'S2책' ${today()} 기준 출고 가능 10부, 입력 11부`)
 
   await submitReturn(page, Q1, 'S2서점', 'S2책', 3)
   await expect(dialog(page)).toBeHidden()
@@ -141,7 +141,7 @@ test('S4 재고가 음수가 되는 입고 삭제는 막히고, 영향 없는 �
 
   await (await receiptRow('10', 3)).click()
   await page.getByRole('button', { name: '삭제' }).click()
-  await expect(page.getByText("입고를 삭제하면 'S4책' 재고가 -5부가 되어 삭제할 수 없습니다.")).toBeVisible()
+  await expect(page.getByText(`입고를 삭제하면 'S4책' 재고가 ${today()}에 -5부가 되어 삭제할 수 없습니다.`)).toBeVisible()
   await expect(page.locator('main tbody tr')).toHaveCount(3)
 
   // 재고 5 → 1: 음수가 아니므로 삭제된다
@@ -153,8 +153,9 @@ test('S4 재고가 음수가 되는 입고 삭제는 막히고, 영향 없는 �
 })
 
 test('S5 두 출판사 × 두 서점 → 출고증·출고 현황·재고 원장 합계', async ({ page }) => {
-  await receive(page, Q1, 'S5가', 50)
-  await receive(page, Q2, 'S5나', 50)
+  // 출고일(D5) 이전에 들어온 재고여야 그날 출고할 수 있다
+  await receive(page, Q1, 'S5가', 50, D5)
+  await receive(page, Q2, 'S5나', 50, D5)
   for (const [pub, store, book, qty] of [
     [Q1, 'S5서점갑', 'S5가', 7],
     [Q1, 'S5서점을', 'S5가', 5],

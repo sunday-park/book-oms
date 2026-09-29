@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { all } from '@/lib/db'
 import {
-  createReceipt, createReturn, deleteReceipt, deleteReturn, deleteShipment, getShipment, listReceipts, listUnprinted, markPrinted,
+  createReceipt, createReturn, deleteReceipt, deleteReturn, deleteShipment, getShipment, listReceipts, listReturns, listUnprinted, markPrinted,
   saveShipment,
 } from '@/lib/repo/inventory'
 import { deleteBook, deleteBookstore, updateBook } from '@/lib/repo/master'
@@ -27,6 +27,12 @@ describe('입고', () => {
     expect(listReceipts(db, { from: D, to: D }).map((r) => r.qty)).toEqual([20, 30])
     expect(listReceipts(db, { from: '2026-09-01', to: D, publisherId: p1 }).map((r) => r.qty)).toEqual([10, 20])
   })
+  it('시작일이 종료일보다 늦으면 입고·반품 조회를 거절한다', () => {
+    const { db } = seed()
+    expect(() => listReceipts(db, { from: '2026-09-29', to: D })).toThrow('시작일은 종료일보다 늦을 수 없습니다.')
+    expect(() => listReturns(db, { from: '2026-09-29', to: D })).toThrow('시작일은 종료일보다 늦을 수 없습니다.')
+    expect(listReceipts(db, { from: D, to: D })).toEqual([])
+  })
   it('부수가 0 이하면 거절한다', () => {
     const { db, b1 } = seed()
     expect(() => createReceipt(db, { date: D, book_id: b1, qty: 0 })).toThrow(AppError)
@@ -44,9 +50,9 @@ describe('입고 삭제', () => {
     const r1 = createReceipt(db, { date: D, book_id: b1, qty: 10 })
     const r2 = createReceipt(db, { date: D, book_id: b1, qty: 5 })
     saveShipment(db, { date: D, publisher_id: p1, bookstore_id: s1, items: [item(b1, 12)] })
-    expect(() => deleteReceipt(db, r1)).toThrow("입고를 삭제하면 '리액트 입문' 재고가 -7부가 되어 삭제할 수 없습니다.")
+    expect(() => deleteReceipt(db, r1)).toThrow("입고를 삭제하면 '리액트 입문' 재고가 2026-09-28에 -7부가 되어 삭제할 수 없습니다.")
     expect(getStock(db, b1)).toBe(3)
-    expect(() => deleteReceipt(db, r2)).toThrow('재고가 -2부가 되어')
+    expect(() => deleteReceipt(db, r2)).toThrow('재고가 2026-09-28에 -2부가 되어')
   })
   it('재고가 0 이상으로 남으면 삭제할 수 있다', () => {
     const { db, p1, s1, b1 } = seed()
@@ -65,7 +71,7 @@ describe('반품 삭제', () => {
     saveShipment(db, { date: D, publisher_id: p1, bookstore_id: s1, items: [item(b1, 10)] })
     const ret = createReturn(db, { date: D, publisher_id: p1, bookstore_id: s1, book_id: b1, qty: 3 })
     saveShipment(db, { date: '2026-09-29', publisher_id: p1, bookstore_id: s1, items: [item(b1, 2)] })
-    expect(() => deleteReturn(db, ret)).toThrow("반품을 삭제하면 '리액트 입문' 재고가 -2부가 되어 삭제할 수 없습니다.")
+    expect(() => deleteReturn(db, ret)).toThrow("반품을 삭제하면 '리액트 입문' 재고가 2026-09-29에 -2부가 되어 삭제할 수 없습니다.")
     expect(getStock(db, b1)).toBe(1)
   })
   it('재고가 0 이상으로 남으면 삭제할 수 있다', () => {
@@ -177,7 +183,7 @@ describe('출고', () => {
     const { db, p1, s1, b1 } = seed()
     createReceipt(db, { date: D, book_id: b1, qty: 10 })
     expect(() => saveShipment(db, { date: D, publisher_id: p1, bookstore_id: s1, items: [item(b1, 15)] })).toThrow(
-      "1행: '리액트 입문' 출고 가능 10부, 입력 15부",
+      "1행: '리액트 입문' 2026-09-28 기준 출고 가능 10부, 입력 15부",
     )
     expect(getShipment(db, D, p1, s1)).toBeNull()
     expect(getStock(db, b1)).toBe(10)
@@ -186,7 +192,7 @@ describe('출고', () => {
     const { db, p1, s1, b1, b2 } = seed()
     createReceipt(db, { date: D, book_id: b1, qty: 10 })
     expect(() => saveShipment(db, { date: D, publisher_id: p1, bookstore_id: s1, items: [item(b1, 5), item(b2, 1)] })).toThrow(
-      "2행: '타입스크립트' 출고 가능 0부, 입력 1부",
+      "2행: '타입스크립트' 2026-09-28 기준 출고 가능 0부, 입력 1부",
     )
     expect(getShipment(db, D, p1, s1)).toBeNull()
   })
@@ -210,7 +216,7 @@ describe('출고', () => {
     saveShipment(db, { date: D, publisher_id: p1, bookstore_id: s1, items: [item(b1, 8)] })
     const first = getShipment(db, D, p1, s1)!.items[0]
     expect(() => saveShipment(db, { date: D, publisher_id: p1, bookstore_id: s1, items: [{ ...item(b1, 11), id: first.id }] })).toThrow(
-      "1행: '리액트 입문' 출고 가능 10부, 입력 11부",
+      "1행: '리액트 입문' 2026-09-28 기준 출고 가능 10부, 입력 11부",
     )
     expect(getShipment(db, D, p1, s1)!.items.map((i) => i.qty)).toEqual([8])
   })
@@ -218,7 +224,7 @@ describe('출고', () => {
     const { db, p1, s1, b1 } = seed()
     createReceipt(db, { date: D, book_id: b1, qty: 10 })
     expect(() => saveShipment(db, { date: D, publisher_id: p1, bookstore_id: s1, items: [item(b1, 6), item(b1, 5)] })).toThrow(
-      "'리액트 입문' 출고 가능 10부, 입력 11부",
+      "'리액트 입문' 2026-09-28 기준 출고 가능 10부, 입력 11부",
     )
     saveShipment(db, { date: D, publisher_id: p1, bookstore_id: s1, items: [item(b1, 6), item(b1, 4)] })
     expect(getStock(db, b1)).toBe(0)
@@ -233,7 +239,7 @@ describe('출고', () => {
     saveShipment(db, { date: D, publisher_id: p1, bookstore_id: s1, items: [{ ...item(b1, 10), id: first.id }, item(b2, 5)] })
     expect(getShipment(db, D, p1, s1)!.items).toHaveLength(2)
     expect(() => saveShipment(db, { date: D, publisher_id: p1, bookstore_id: s1, items: [{ ...item(b1, 11), id: first.id }] })).toThrow(
-      "1행: '리액트 입문' 출고 가능 0부, 입력 11부",
+      "1행: '리액트 입문' 2026-09-28 기준 출고 가능 0부, 입력 11부",
     )
   })
   it('다른 서점 출고분은 출고 가능 부수에서 빠진다', () => {
@@ -241,7 +247,7 @@ describe('출고', () => {
     createReceipt(db, { date: D, book_id: b1, qty: 10 })
     saveShipment(db, { date: D, publisher_id: p1, bookstore_id: s2, items: [item(b1, 7)] })
     expect(() => saveShipment(db, { date: D, publisher_id: p1, bookstore_id: s1, items: [item(b1, 4)] })).toThrow(
-      "1행: '리액트 입문' 출고 가능 3부, 입력 4부",
+      "1행: '리액트 입문' 2026-09-28 기준 출고 가능 3부, 입력 4부",
     )
   })
   it('출고 삭제 시 행도 함께 삭제한다', () => {

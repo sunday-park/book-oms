@@ -1,4 +1,5 @@
 import { expect, test, type Dialog, type Locator, type Page } from '@playwright/test'
+import { withPosts } from './scenario-helpers'
 
 function trackErrors(page: Page) {
   const pageErrors: Error[] = []
@@ -91,7 +92,8 @@ test('출판사 → 서점 → 도서 → 입고 → 출고 → 반품 → 현�
 
   await page.goto('/statements/entry')
   await pick(page, page, '출판사', '한빛')
-  await pick(page, page, '서점', '교보')
+  // 서점을 고르면 명세·출고 가능 부수를 불러와 행을 다시 그린다 — 그 전에 도서를 고르면 열린 목록이 닫힐 수 있다
+  await withPosts(page, 2, () => pick(page, page, '서점', '교보'))
   await pick(page, page, '1행 도서', '리액트')
   await page.getByLabel('1행 출고율').fill('60')
   await page.getByLabel('1행 부수').fill('30')

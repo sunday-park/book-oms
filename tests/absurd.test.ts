@@ -65,7 +65,7 @@ describe('A3 날짜', () => {
     createReceipt(db, { date: '2028-02-29', book_id: b1, qty: 1 })
     expect(getStock(db, b1)).toBe(1)
   })
-  it('⚠️ 먼 과거·미래(1900, 2999)는 현재 허용한다', () => {
+  it('먼 과거·미래(1900, 2999)도 서버는 허용한다 (화면에서 확인을 받는다)', () => {
     const { db, b1 } = seed()
     createReceipt(db, { date: '1900-01-01', book_id: b1, qty: 1 })
     createReceipt(db, { date: '2999-12-31', book_id: b1, qty: 1 })
@@ -120,7 +120,7 @@ describe('B1 반품 부수는 그 서점에 출고한 부수를 넘을 수 없�
   it('출고한 적 없는 서점·도서의 반품은 거절한다', () => {
     const { db, p1, s1, b1 } = seed()
     expect(() => createReturn(db, { date: D, publisher_id: p1, bookstore_id: s1, book_id: b1, qty: 1 })).toThrow(
-      "'리액트 입문'은 '교보문고 광화문'에 반품 가능한 부수가 0부입니다.",
+      "'리액트 입문'은 '교보문고 광화문'에 2026-09-28까지 반품 가능한 부수가 0부입니다.",
     )
     expect(getStock(db, b1)).toBe(0)
   })
@@ -137,19 +137,23 @@ describe('B1 반품 부수는 그 서점에 출고한 부수를 넘을 수 없�
   })
 })
 
-describe('B2 날짜 역전 (⚠️ 현재 동작 기록 — 재고는 날짜와 무관하게 합산)', () => {
-  it('내년 입고로 오늘 출고가 된다', () => {
+describe('B2 날짜 역전 (🔧 날짜 기준으로 막음)', () => {
+  it('내년 입고로 오늘 출고할 수 없다', () => {
     const { db, p1, s1, b1 } = seed()
     createReceipt(db, { date: '2027-09-28', book_id: b1, qty: 10 })
-    saveShipment(db, { date: D, publisher_id: p1, bookstore_id: s1, items: [item(b1, 10)] })
-    expect(getStock(db, b1)).toBe(0)
+    expect(() => saveShipment(db, { date: D, publisher_id: p1, bookstore_id: s1, items: [item(b1, 10)] })).toThrow(
+      "1행: '리액트 입문' 2026-09-28 기준 출고 가능 0부, 입력 10부",
+    )
+    expect(getStock(db, b1)).toBe(10)
   })
-  it('반품일이 출고일보다 이전이어도 등록된다', () => {
+  it('반품일이 출고일보다 이전이면 거절한다', () => {
     const { db, p1, s1, b1 } = seed()
     createReceipt(db, { date: D, book_id: b1, qty: 10 })
     saveShipment(db, { date: D, publisher_id: p1, bookstore_id: s1, items: [item(b1, 5)] })
-    createReturn(db, { date: '2026-01-01', publisher_id: p1, bookstore_id: s1, book_id: b1, qty: 2 })
-    expect(getStock(db, b1)).toBe(7)
+    expect(() => createReturn(db, { date: '2026-01-01', publisher_id: p1, bookstore_id: s1, book_id: b1, qty: 2 })).toThrow(
+      "'리액트 입문'은 '교보문고 광화문'에 2026-01-01까지 반품 가능한 부수가 0부입니다.",
+    )
+    expect(getStock(db, b1)).toBe(5)
   })
 })
 

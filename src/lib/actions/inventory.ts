@@ -28,11 +28,15 @@ export async function deleteReturn(id: number) {
 export async function getShipment(date: string, publisherId: number, bookstoreId: number) {
   return wrap(() => inv.getShipment(getDb(), date, publisherId, bookstoreId))
 }
-export async function saveShipment(input: inv.ShipmentInput) {
-  return wrap(() => inv.saveShipment(getDb(), input))
+/** version: 화면이 불러온 명세 버전 (null = 명세가 없었음) — 그새 다른 곳에서 바뀌었으면 거절 */
+export async function saveShipment(input: inv.ShipmentInput & { version: number | null }) {
+  return wrap(() => inv.saveShipment(getDb(), { ...input, version: input.version ?? null }))
 }
-export async function deleteShipment(id: number) {
-  return wrap(() => inv.deleteShipment(getDb(), id))
+export async function deleteShipment(id: number, version: number) {
+  return wrap(() => inv.deleteShipment(getDb(), id, version))
+}
+export async function listAvailable(date: string, publisherId: number, bookstoreId: number) {
+  return wrap(() => inv.listAvailable(getDb(), date, publisherId, bookstoreId))
 }
 export async function listUnprinted(date: string, publisherId: number, bookstoreId: number) {
   return wrap(() => inv.listUnprinted(getDb(), date, publisherId, bookstoreId))

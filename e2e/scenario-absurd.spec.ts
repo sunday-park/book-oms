@@ -1,7 +1,7 @@
 import { expect, test, type Dialog, type Page } from '@playwright/test'
 import {
   addBook, addPublisher, addRow, addStore, dialog, entryRow, fillRow, openEntry, pick, receive, saveEntry, saveEntryRejected,
-  stockRow, submitReturn, today, trackErrors,
+  stockRow, submitReturn, today, trackErrors, withPosts,
 } from './scenario-helpers'
 
 /**
@@ -123,7 +123,7 @@ test('A3 날짜: 빈 날짜 거절, 1900·2999 년은 ⚠️ 허용', async ({ p
   await expect(formError(page)).toHaveText('입고일자를 선택하세요.')
   await dialog(page).getByRole('button', { name: '취소' }).click()
 
-  // ⚠️ 먼 과거·미래 날짜는 현재 그대로 저장된다
+  // 먼 과거·미래 날짜는 확인(수락)을 거쳐 저장된다 — 확인 창은 B9 에서 따로 본다
   await receive(page, Z, 'Z미래책', 1, '1900-01-01')
   await receive(page, Z, 'Z미래책', 1, '2999-12-31')
   const row = await stockRow(page, Z, 'Z미래책')
@@ -188,13 +188,13 @@ test('A5 코드 중복: 같은 코드·대소문자만 다른 코드 모두 거�
 
 test('B1 반품: 출고한 적 없는 서점 반품·출고보다 많은 반품 거절', async ({ page }) => {
   await submitReturn(page, Z, 'Y서점이', 'Z반품책', 1)
-  await expect(formError(page)).toHaveText("'Z반품책'은 'Y서점이'에 반품 가능한 부수가 0부입니다.")
+  await expect(formError(page)).toHaveText(`'Z반품책'은 'Y서점이'에 ${today()}까지 반품 가능한 부수가 0부입니다.`)
 
   await openEntry(page, Z, 'Y서점이')
   await fillRow(page, 1, 'Z반품책', 5)
   await saveEntry(page)
   await submitReturn(page, Z, 'Y서점이', 'Z반품책', 10)
-  await expect(formError(page)).toHaveText("'Z반품책'은 'Y서점이'에 반품 가능한 부수가 5부입니다.")
+  await expect(formError(page)).toHaveText(`'Z반품책'은 'Y서점이'에 ${today()}까지 반품 가능한 부수가 5부입니다.`)
   await dialog(page).getByLabel('부수').fill('5')
   await dialog(page).getByRole('button', { name: '저장' }).click()
   await expect(dialog(page)).toBeHidden()
@@ -203,16 +203,21 @@ test('B1 반품: 출고한 적 없는 서점 반품·출고보다 많은 반품 
   await expect(row.getByRole('cell').nth(5)).toHaveText('20') // 입고 20 − 출고 5 + 반품 5
 })
 
-test('B2 ⚠️ 날짜 역전: 내년 입고로 오늘 출고 가능, 출고일 이전 날짜 반품 가능', async ({ page }) => {
+test('B2 🔧 날짜 역전: 내년 입고로 오늘 출고 막힘, 출고일 이전 날짜 반품 막힘', async ({ page }) => {
   const nextYear = `${Number(today().slice(0, 4)) + 1}${today().slice(4)}`.replace(/-02-29$/, '-02-28')
   await receive(page, Z, 'Z미래책', 10, nextYear)
   await openEntry(page, Z, 'Y서점삼')
-  await fillRow(page, 1, 'Z미래책', 12) // 재고 = 1900년 1 + 2999년 1 + 내년 10
+  await fillRow(page, 1, 'Z미래책', 12) // 전체 재고는 12(1900년 1 + 2999년 1 + 내년 10)지만 오늘 기준으로는 1부
+  await expect(entryRow(page, 1).getByText(/출고 가능/)).toHaveText('출고 가능 1부')
+  await saveEntryRejected(page, `1행: 'Z미래책' ${today()} 기준 출고 가능 1부, 입력 12부`)
+  await page.getByLabel('1행 부수').fill('1')
   await saveEntry(page)
-  await submitReturn(page, Z, 'Y서점삼', 'Z미래책', 1, '2020-01-01')
-  await expect(dialog(page)).toBeHidden()
+
+  await submitReturn(page, Z, 'Y서점삼', 'Z미래책', 1, '2020-01-01') // 이상 날짜 확인은 수락
+  await expect(formError(page)).toHaveText("'Z미래책'은 'Y서점삼'에 2020-01-01까지 반품 가능한 부수가 0부입니다.")
+  await dialog(page).getByRole('button', { name: '취소' }).click()
   const row = await stockRow(page, Z, 'Z미래책')
-  await expect(row.getByRole('cell').nth(5)).toHaveText('1')
+  await expect(row.getByRole('cell').nth(5)).toHaveText('11')
 })
 
 test('B3 같은 도서 여러 행: 합계로 막고, 줄이면 저장', async ({ page }) => {
@@ -223,13 +228,13 @@ test('B3 같은 도서 여러 행: 합계로 막고, 줄이면 저장', async ({
     await expect(entryRow(page, n).getByText(/출고 가능/)).toHaveText('출고 가능 98부')
     await expect(entryRow(page, n).getByText(/출고 가능/)).toHaveClass(/text-neg/)
   }
-  await saveEntryRejected(page, "1행: 'Z책A' 출고 가능 98부, 입력 110부")
+  await saveEntryRejected(page, `1행: 'Z책A' ${today()} 기준 출고 가능 98부, 입력 110부`)
   await page.getByLabel('2행 부수').fill('38')
   await expect(entryRow(page, 2).getByText(/출고 가능/)).not.toHaveClass(/text-neg/)
   await saveEntry(page)
 })
 
-test('B4 ⚠️ 두 탭 동시 편집: 오래된 탭에서 저장하면 다른 탭이 추가한 행이 사라진다', async ({ page, context }) => {
+test('B4 🔧 두 탭 동시 편집: 오래된 탭의 저장은 막히고, 다른 탭이 추가한 행은 남는다', async ({ page, context }) => {
   const other = await context.newPage()
   const otherErrors = trackErrors(other)
   other.on('dialog', accept)
@@ -241,12 +246,15 @@ test('B4 ⚠️ 두 탭 동시 편집: 오래된 탭에서 저장하면 다른 �
   await saveEntry(page)
   await expect(page.locator('main tbody tr')).toHaveCount(3)
 
-  await saveEntry(other) // 탭 B: 2행짜리 오래된 화면 그대로 저장
+  await saveEntryRejected(other, '다른 곳에서 이 출고 명세가 먼저 수정되었습니다. [취소]를 눌러 새로 불러온 뒤 다시 입력하세요.') // 탭 B: 2행짜리 오래된 화면
+  await withPosts(other, 2, () => other.getByRole('button', { name: '취소' }).click())
+  await expect(other.locator('main tbody tr')).toHaveCount(3) // [취소]로 새로 불러오면 탭 A 의 행이 보인다
 
-  await openEntry(page, Z, 'Y서점사')
-  await expect(page.locator('main tbody tr')).toHaveCount(2) // ⚠️ 탭 A 의 3행(Z책B 5부)이 사라졌다
+  await openEntry(page, Z, 'Y서점사') // 다시 열어도 그대로
+  await expect(page.locator('main tbody tr')).toHaveCount(3)
+  await expect(page.getByLabel('3행 부수')).toHaveValue('5')
   const row = await stockRow(page, Z, 'Z책B')
-  await expect(row.getByRole('cell').nth(3)).toHaveText('0')
+  await expect(row.getByRole('cell').nth(3)).toHaveText('5')
   otherErrors.assertClean()
   await other.close()
 })
@@ -255,7 +263,7 @@ test('B5 인쇄된 명세: 출고 삭제·인쇄된 행 수정은 막힘', async
   await page.goto('/statements/print')
   await pick(page, page, '출판사', Z)
   await pick(page, page, '서점', 'Y서점사')
-  await expect(page.locator('main tbody tr')).toHaveCount(2)
+  await expect(page.locator('main tbody tr')).toHaveCount(3)
   await page.evaluate(() => {
     window.print = () => {}
   })
@@ -268,7 +276,7 @@ test('B5 인쇄된 명세: 출고 삭제·인쇄된 행 수정은 막힘', async
   await expect(page.getByRole('button', { name: '1행 삭제' })).toBeDisabled()
   await page.getByRole('button', { name: '삭제', exact: true }).click()
   await expect(page.getByText('이미 인쇄된 명세가 있어 삭제할 수 없습니다.')).toBeVisible()
-  await expect(page.locator('main tbody tr')).toHaveCount(2)
+  await expect(page.locator('main tbody tr')).toHaveCount(3)
 })
 
 test('B7 출고 100행 한 번에 저장', async ({ page }) => {
@@ -277,7 +285,7 @@ test('B7 출고 100행 한 번에 저장', async ({ page }) => {
   await fillRow(page, 1, 'Z책B', 1)
   for (let n = 2; n <= 100; n++) await addRow(page, n, 'Z책B', 1)
   await expect(page.getByRole('row', { name: /합계/ })).toContainText('총 100부')
-  await expect(entryRow(page, 100).getByText(/출고 가능/)).toHaveText('출고 가능 1,000부')
+  await expect(entryRow(page, 100).getByText(/출고 가능/)).toHaveText('출고 가능 995부') // B4 에서 5부 출고
 
   const t = Date.now()
   await saveEntry(page)
@@ -315,4 +323,53 @@ test('B8 이력이 있는 출판사·서점·도서 삭제는 막힘', async ({ 
   await expect(formError(page)).toHaveText('입고·출고·반품 이력이 있어 삭제할 수 없습니다.')
   await dialog(page).getByRole('button', { name: '취소' }).click()
   await expect(page.getByRole('row', { name: /Z책A/ })).toBeVisible()
+})
+
+test('B9 🔧 오늘과 1년 넘게 차이 나는 날짜는 확인을 받는다 (취소 → 저장 안 함, 확인 → 저장)', async ({ page }) => {
+  const confirms: string[] = []
+  page.off('dialog', accept)
+  page.on('dialog', (d) => {
+    if (d.type() !== 'confirm') return
+    confirms.push(d.message())
+    void (confirms.length === 1 ? d.dismiss() : d.accept())
+  })
+  await page.goto('/receipts')
+  await page.getByRole('button', { name: '등록', exact: true }).click()
+  await dialog(page).getByLabel('입고일자').fill('2020-01-01')
+  await pick(page, dialog(page), '출판사', Z)
+  await pick(page, dialog(page), '도서', 'Z반품책')
+  await dialog(page).getByLabel('입고부수').fill('7')
+  await dialog(page).getByRole('button', { name: '저장' }).click()
+  await expect.poll(() => confirms.length).toBe(1)
+  expect(confirms[0]).toBe('입력한 날짜(2020-01-01)가 오늘과 1년 이상 차이 납니다. 이 날짜가 맞나요?')
+  await expect(dialog(page)).toBeVisible() // 취소 → 창이 그대로, 저장 안 됨
+  let row = await stockRow(page, Z, 'Z반품책')
+  await expect(row.getByRole('cell').nth(2)).toHaveText('20')
+
+  await receive(page, Z, 'Z반품책', 7, '2020-01-01') // 두 번째 확인은 수락 → 저장
+  expect(confirms).toHaveLength(2)
+  row = await stockRow(page, Z, 'Z반품책')
+  await expect(row.getByRole('cell').nth(2)).toHaveText('27')
+})
+
+test('B10 🔧 기간 필터: 시작일이 종료일보다 늦어지는 값은 적용하지 않고 알린다 (입고·반품)', async ({ page }) => {
+  for (const url of ['/receipts', '/returns']) {
+    await page.goto(url)
+    const from = page.getByLabel('시작일')
+    const to = page.getByLabel('종료일')
+    await expect(from).toHaveAttribute('max', today())
+    await expect(to).toHaveAttribute('min', today())
+
+    await from.fill('2099-01-01')
+    await expect(page.getByText('시작일은 종료일보다 늦을 수 없습니다.').last()).toBeVisible()
+    await expect(from).toHaveValue(today())
+
+    await to.fill('2000-01-01')
+    await expect(page.getByText('시작일은 종료일보다 늦을 수 없습니다.')).not.toHaveCount(0)
+    await expect(to).toHaveValue(today())
+
+    await from.fill('2000-01-01') // 뒤집히지 않는 값은 그대로 적용
+    await expect(from).toHaveValue('2000-01-01')
+    await expect(to).toHaveAttribute('min', '2000-01-01')
+  }
 })

@@ -15,8 +15,9 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { none, useQuery } from '@/hooks/use-query'
-import { deleteShipment, getShipment, listStock, saveShipment } from '@/lib/actions/inventory'
+import { deleteShipment, getShipment, listAvailable, saveShipment } from '@/lib/actions/inventory'
 import { listBookstores, listBooks, listPublishers } from '@/lib/actions/master'
+import { confirmOddDate } from '@/lib/confirm-date'
 import { calcAmount, calcUnitPrice, DEFAULT_RATE, SHIP_KINDS, type ShipKind } from '@/lib/domain'
 import { today, won } from '@/lib/format'
 import { bookOptions, pubOptions, storeOptions } from '@/lib/options'
@@ -41,10 +42,12 @@ export default function ShipmentEntryPage() {
   const [pubId, setPubId] = useState<number | null>(null)
   const [storeId, setStoreId] = useState<number | null>(null)
   const [shipmentId, setShipmentId] = useState<number | null>(null)
+  // 불러온 명세 버전 (null = 명세 없음) — 저장·삭제 때 보내서 그새 다른 곳에서 바뀌었으면 거절받는다
+  const [version, setVersion] = useState<number | null>(null)
   const [rows, setRows] = useState<Row[]>(() => [newRow()])
   const [error, setError] = useState('')
   const [dirty, setDirty] = useState(false)
-  // 도서별 출고 가능 부수 = 현재고 + 이 출고에 저장돼 있던 부수 (다시 저장하면 그만큼은 되돌려지므로)
+  // 도서별 선택한 날짜 기준 출고 가능 부수 (이 명세에 저장돼 있던 부수는 되돌린 것으로 계산 — 다시 저장하면 그만큼은 되돌려지므로)
   const [available, setAvailable] = useState(new Map<number, number>())
   const reqRef = useRef(0)
   const pubs = useQuery(listPublishers, [], [] as Publisher[], 'publishers')
@@ -58,18 +61,18 @@ export default function ShipmentEntryPage() {
     setError('')
     if (!pubId || !storeId) {
       setShipmentId(null)
+      setVersion(null)
       setRows([newRow()])
       setDirty(false)
       return
     }
-    const [r, s] = await Promise.all([getShipment(date, pubId, storeId), listStock(pubId)])
+    const [r, s] = await Promise.all([getShipment(date, pubId, storeId), listAvailable(date, pubId, storeId)])
     if (seq !== reqRef.current) return // 이후 요청이 이미 시작됨 — 이 결과는 버림
     if (!r.ok) return void toast.error(r.error)
     if (!s.ok) return void toast.error(s.error)
-    const avail = new Map(s.data.map((x) => [x.book_id, x.stock]))
-    for (const it of r.data?.items ?? []) avail.set(it.book_id, (avail.get(it.book_id) ?? 0) + it.qty)
-    setAvailable(avail)
+    setAvailable(new Map(s.data.map((x) => [x.book_id, x.available])))
     setShipmentId(r.data?.id ?? null)
+    setVersion(r.data?.version ?? null)
     setRows(
       r.data?.items.length
         ? r.data.items.map((it) => ({
@@ -126,10 +129,12 @@ export default function ShipmentEntryPage() {
   }
 
   async function save() {
+    if (!confirmOddDate(date)) return
     const r = await saveShipment({
       date,
       publisher_id: pubId,
       bookstore_id: storeId,
+      version,
       items: rows.map(({ id, book_id, rate, kind, qty }) => ({ id, book_id, rate, kind, qty })),
     })
     if (!r.ok) return setError(r.error)
@@ -143,7 +148,7 @@ export default function ShipmentEntryPage() {
       return
     }
     if (!confirm('이 출고 명세를 삭제할까요?')) return
-    const r = await deleteShipment(shipmentId)
+    const r = await deleteShipment(shipmentId, version ?? 0)
     if (!r.ok) return toast.error(r.error)
     toast.success('삭제했습니다.')
     void load()

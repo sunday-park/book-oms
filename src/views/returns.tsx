@@ -14,6 +14,8 @@ import { Table, TableBody, TableCell, TableFooter, TableHeader, TableRow } from 
 import { none, useQuery } from '@/hooks/use-query'
 import { createReturn, deleteReturn, listReturns } from '@/lib/actions/inventory'
 import { listBookstores, listBooks, listPublishers } from '@/lib/actions/master'
+import { confirmOddDate } from '@/lib/confirm-date'
+import { rangeReady, setRange } from '@/lib/date-range'
 import { today, won } from '@/lib/format'
 import { bookOptions, pubOptions, storeOptions } from '@/lib/options'
 import type { ReturnRow } from '@/lib/repo/inventory'
@@ -27,7 +29,7 @@ export default function ReturnsPage() {
   const pubs = useQuery(listPublishers, [], [] as Publisher[], 'publishers')
   const stores = useQuery(listBookstores, [], [] as Bookstore[], 'bookstores')
   const list = useQuery(
-    () => listReturns({ from: f.from, to: f.to, publisherId: f.pubId ?? undefined, bookstoreId: f.storeId ?? undefined }),
+    () => (rangeReady(f) ? listReturns({ from: f.from, to: f.to, publisherId: f.pubId ?? undefined, bookstoreId: f.storeId ?? undefined }) : none([] as ReturnRow[])),
     [f],
     [] as ReturnRow[],
     'returns',
@@ -42,7 +44,7 @@ export default function ReturnsPage() {
   const patch = (p: Partial<Form>) => setForm((x) => x && { ...x, ...p })
 
   async function save() {
-    if (!form) return
+    if (!form || !confirmOddDate(form.date)) return
     const r = await createReturn(form)
     if (!r.ok) return setError(r.error)
     toast.success('저장했습니다.')
@@ -68,10 +70,10 @@ export default function ReturnsPage() {
       <PageHeader title="반품 관리" />
       <SearchBar onReset={() => setF(initFilter())} onSearch={list.reload}>
         <Field label="시작일">
-          <Input type="date" className="w-40" value={f.from} onChange={(e) => setF({ ...f, from: e.target.value })} />
+          <Input type="date" className="w-40" value={f.from} max={f.to} onChange={(e) => setRange(f, { from: e.target.value }, setF)} />
         </Field>
         <Field label="종료일">
-          <Input type="date" className="w-40" value={f.to} onChange={(e) => setF({ ...f, to: e.target.value })} />
+          <Input type="date" className="w-40" value={f.to} min={f.from} onChange={(e) => setRange(f, { to: e.target.value }, setF)} />
         </Field>
         <Field label="출판사">
           <EntityCombobox label="출판사" allLabel="전체" options={pubOptions(pubs.data)} value={f.pubId} onChange={(v) => setF({ ...f, pubId: v })} />
