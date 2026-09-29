@@ -9,7 +9,7 @@ export function ColHead({ className, children, ...props }: ComponentProps<'th'>)
   return (
     <TableHead className={className} {...props}>
       <span className="inline-flex items-center gap-2">
-        <GripVertical aria-hidden className="size-3.5 text-slate-300" />
+        <GripVertical aria-hidden className="size-3.5 text-line-strong" />
         {children}
       </span>
     </TableHead>
@@ -32,7 +32,7 @@ export function SelectableRow({ selected, onSelect, className, ...props }: Compo
       }}
       className={cn(
         // 선택 막대·포커스 테두리는 globals.css 의 .selectable-row 참고
-        'selectable-row cursor-pointer outline-none hover:bg-slate-50 data-[state=selected]:bg-selected data-[state=selected]:font-semibold data-[state=selected]:text-slate-950 data-[state=selected]:hover:bg-selected',
+        'selectable-row cursor-pointer outline-none hover:bg-row-hover data-[state=selected]:bg-selected data-[state=selected]:font-semibold data-[state=selected]:text-selected-foreground data-[state=selected]:hover:bg-selected',
         className,
       )}
       {...props}

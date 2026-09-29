@@ -24,7 +24,7 @@ export function SearchBar({ onReset, onSearch, children }: { onReset: () => void
 /** 감싸는 label 이라 getByLabel 로 안쪽 입력칸을 찾을 수 있다 */
 export function Field({ label, className, children }: { label: string; className?: string; children: ReactNode }) {
   return (
-    <label className={cn('grid gap-2 text-[15px] font-medium text-slate-700', className)}>
+    <label className={cn('grid gap-2 text-[15px] font-medium text-secondary-foreground', className)}>
       {label}
       {children}
     </label>

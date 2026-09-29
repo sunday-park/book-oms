@@ -13,7 +13,7 @@ export function HelpButton() {
     <Popover>
       <PopoverTrigger
         aria-label="도움말"
-        className={cn(buttonVariants({ variant: 'outline', size: 'icon-lg' }), 'fixed right-4 bottom-4 z-40 rounded-full text-xl text-slate-700 shadow-md print:hidden')}
+        className={cn(buttonVariants({ variant: 'outline', size: 'icon-lg' }), 'fixed right-4 bottom-4 z-40 rounded-full text-xl text-secondary-foreground shadow-md print:hidden')}
       >
         ?
       </PopoverTrigger>

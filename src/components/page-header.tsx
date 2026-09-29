@@ -12,7 +12,7 @@ export function PageHeader({ title, children }: { title: string; children?: Reac
   return (
     <div className="flex items-center gap-4 print:hidden">
       {Icon && item && (
-        <div className={cn('flex size-[50px] shrink-0 items-center justify-center rounded-xl', item.tone ? TONE_TILE[item.tone] : 'bg-[#dfe5ee] text-slate-700')}>
+        <div className={cn('flex size-[50px] shrink-0 items-center justify-center rounded-xl', item.tone ? TONE_TILE[item.tone] : 'bg-tile text-tile-foreground')}>
           <Icon className="size-6" strokeWidth={1.8} />
         </div>
       )}

@@ -33,18 +33,18 @@ export function AppSidebar() {
   return (
     <aside
       className={cn(
-        'sticky top-0 flex h-screen shrink-0 flex-col bg-sidebar text-sidebar-foreground transition-[width] duration-200 print:hidden',
+        'sticky top-0 flex h-screen shrink-0 flex-col bg-sidebar shadow-[inset_-1px_0_0_var(--sidebar-edge)] text-sidebar-foreground transition-[width] duration-200 print:hidden',
         collapsed ? 'w-[76px]' : 'w-72',
       )}
     >
       <div className={cn('flex items-center gap-3.5 border-b border-sidebar-border py-6', collapsed ? 'justify-center px-0' : 'px-5')}>
-        <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-sidebar-primary text-white">
+        <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-sidebar-logo text-sidebar-logo-foreground">
           <BookOpen className="size-5" />
         </div>
         {!collapsed && (
           <div className="min-w-0">
-            <div className="truncate text-lg leading-tight font-bold text-white">도서 재고관리</div>
-            <div className="mt-1 font-mono text-xs text-slate-400" suppressHydrationWarning>{today()}</div>
+            <div className="truncate text-lg leading-tight font-bold text-sidebar-heading">도서 재고관리</div>
+            <div className="mt-1 font-mono text-xs text-sidebar-muted" suppressHydrationWarning>{today()}</div>
           </div>
         )}
       </div>
@@ -83,8 +83,8 @@ export function AppSidebar() {
                       className={cn(
                         'flex h-[clamp(34px,4.4vh,50px)] items-center gap-3 rounded-lg text-lg font-semibold whitespace-nowrap transition-colors',
                         collapsed ? 'justify-center px-0' : 'px-3.5',
-                        'outline-none focus-visible:ring-3 focus-visible:ring-sky-300',
-                        active ? 'bg-sidebar-primary text-white' : 'hover:bg-sidebar-accent hover:text-white',
+                        'outline-none focus-visible:ring-3 focus-visible:ring-sidebar-focus',
+                        active ? 'bg-sidebar-primary text-sidebar-primary-foreground' : 'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
                       )}
                     >
                       <Icon className="size-5 shrink-0" strokeWidth={1.8} />
@@ -105,7 +105,7 @@ export function AppSidebar() {
           aria-label={collapsed ? '메뉴 펼치기' : '메뉴 접기'}
           title={collapsed ? '메뉴 펼치기' : '메뉴 접기'}
           aria-expanded={!collapsed}
-          className={cn(buttonVariants({ variant: 'ghost', size: 'icon' }), 'text-sidebar-muted aria-expanded:bg-transparent aria-expanded:text-sidebar-muted enabled:hover:bg-sidebar-accent enabled:hover:text-white focus-visible:ring-sky-300')}
+          className={cn(buttonVariants({ variant: 'ghost', size: 'icon' }), 'text-sidebar-muted aria-expanded:bg-transparent aria-expanded:text-sidebar-muted enabled:hover:bg-sidebar-accent enabled:hover:text-sidebar-accent-foreground focus-visible:ring-sidebar-focus')}
         >
           {collapsed ? <PanelLeftOpen className="size-5" /> : <PanelLeftClose className="size-5" />}
         </button>

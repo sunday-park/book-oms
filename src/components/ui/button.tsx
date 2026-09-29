@@ -13,13 +13,13 @@ const buttonVariants = cva(
         outline:
           "border-input bg-card text-foreground enabled:hover:bg-muted aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:enabled:hover:bg-input/50",
         secondary:
-          "border-[#c9d3e3] bg-secondary text-secondary-foreground enabled:hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
+          "border-secondary-border bg-secondary text-secondary-foreground enabled:hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
         ghost:
           "enabled:hover:bg-muted enabled:hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:enabled:hover:bg-muted/50",
         destructive:
           "bg-destructive/10 text-destructive enabled:hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:enabled:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
         /** 삭제처럼 되돌리기 어려운 동작 — 흰 바탕 빨간 테두리 */
-        danger: "border-red-200 bg-card text-red-700 enabled:hover:bg-red-50 enabled:hover:text-red-800",
+        danger: "border-danger-border bg-card text-danger enabled:hover:bg-danger-soft enabled:hover:text-danger-strong",
         link: "text-primary underline-offset-4 hover:underline",
       },
       // 버튼 크기는 두 가지뿐: 기본(페이지·카드·모달 공통 동작 버튼)과 icon(표 행 휴지통·사이드바 접기 같은 작은 아이콘 버튼)

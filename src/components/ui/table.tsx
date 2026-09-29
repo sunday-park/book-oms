@@ -43,7 +43,7 @@ function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
     <tfoot
       data-slot="table-footer"
       className={cn(
-        "border-t-2 border-slate-300 bg-total font-bold [&>tr]:last:border-b-0",
+        "border-t-2 border-line-strong bg-total font-bold [&>tr]:last:border-b-0",
         className
       )}
       {...props}

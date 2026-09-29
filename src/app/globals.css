@@ -61,6 +61,24 @@
   --color-tx-ship-bg: var(--tx-ship-bg);
   --color-tx-return: var(--tx-return);
   --color-tx-return-bg: var(--tx-return-bg);
+  --color-topbar: var(--topbar);
+  --color-live: var(--live);
+  --color-tile: var(--tile);
+  --color-tile-foreground: var(--tile-foreground);
+  --color-group-head: var(--group-head);
+  --color-emphasis: var(--emphasis);
+  --color-row-hover: var(--row-hover);
+  --color-selected-foreground: var(--selected-foreground);
+  --color-line-strong: var(--line-strong);
+  --color-secondary-border: var(--secondary-border);
+  --color-danger: var(--danger);
+  --color-danger-strong: var(--danger-strong);
+  --color-danger-border: var(--danger-border);
+  --color-danger-soft: var(--danger-soft);
+  --color-sidebar-heading: var(--sidebar-heading);
+  --color-sidebar-focus: var(--sidebar-focus);
+  --color-sidebar-logo: var(--sidebar-logo);
+  --color-sidebar-logo-foreground: var(--sidebar-logo-foreground);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -71,67 +89,90 @@
 }
 
 :root {
-  /* 디자인 토큰 — 네이비 기본색, 회청색 배경, 어두운 네이비 사이드바 */
+  /* 디자인 토큰 — 네이비 한 가지 파랑 계열(색상각 약 222°), 옅은 회청 바탕, 어두운 네이비 사이드바 */
   --card: #ffffff;
-  --card-foreground: #0f172a;
+  --card-foreground: #111a2e;
   --popover: #ffffff;
-  --popover-foreground: #0f172a;
-  --primary: #1e3a8a;
+  --popover-foreground: #111a2e;
+  --primary: #1f3a7a;
   --primary-foreground: #ffffff;
-  --secondary: #e2e8f2;
-  --secondary-foreground: #334155;
+  --secondary: #e8edf6;
+  --secondary-foreground: #28344a;
   --muted: #f1f4f9;
-  --muted-foreground: #475569; /* 보조 글자 — 흰 배경 7.6:1, 회청 배경 6.7:1 (AA) */
-  --placeholder: #64748b; /* 입력칸 안내 글자 — 흰 입력칸 4.8:1 */
-  --accent: #eef2f8;
-  --accent-foreground: #0f172a;
+  --muted-foreground: #4a5670; /* 보조 글자 — 흰·회청 배경 모두 AA */
+  --placeholder: #66728a; /* 입력칸 안내 글자 */
+  --accent: #eef2f9;
+  --accent-foreground: #111a2e;
   --destructive: oklch(0.577 0.245 27.325);
-  --border: #e2e8f0;
-  --input: #d3dbe6;
-  --ring: #2563eb;
+  --border: #e2e6ee;
+  --input: #cdd4e0;
+  --ring: #3a5fc8;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
   --radius: 0.625rem;
-  --sidebar: #131b2e;
-  --sidebar-foreground: #dbe2ec;
-  --sidebar-primary: #1d4ed8;
+  --sidebar: #14213d;
+  --sidebar-foreground: #d6deec;
+  --sidebar-primary: #2849a8;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #1f2a40;
+  --sidebar-accent: #1f2e50;
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: rgb(255 255 255 / 0.08);
-  --sidebar-ring: #3b82f6;
-  --sidebar-muted: #94a3b8; /* 사이드바 섹션 제목 — 네이비 위 6.7:1 */
-  --background: #eef1f6;
-  --foreground: #0f172a;
+  --sidebar-ring: #3a5fc8;
+  --sidebar-muted: #93a2c0; /* 사이드바 섹션 제목 */
+  --background: #f4f5f8;
+  --foreground: #111a2e;
+  --sidebar-heading: #ffffff; /* 사이드바 앱 이름 */
+  --sidebar-focus: #9db3e6; /* 사이드바 키보드 포커스 링 */
+  --sidebar-logo: #3a5fc8;
+  --sidebar-logo-foreground: #ffffff;
+  --sidebar-edge: transparent; /* 밝은 사이드바 테마에서 본문과 가르는 오른쪽 1px 선 */
+
+  /* 화면 틀 — 상단바, 화면 제목 아이콘 칸, 도서 목록 출판사 묶음행 */
+  --topbar: #ffffff;
+  --live: #12a150; /* 상단바 날짜 옆 초록 점 */
+  --tile: #e3eaf8;
+  --tile-foreground: #1f3a7a;
+  --group-head: #eaf0fa;
+  --emphasis: #1e2940; /* 순번·출판사명 등 진한 글자 */
+  --secondary-border: #c8d2e4; /* 보조 버튼(수정) 테두리 */
+
+  /* 삭제 버튼 — 흰 바탕 빨간 테두리 */
+  --danger: #b42318;
+  --danger-strong: #912018;
+  --danger-border: #fbd0cb;
+  --danger-soft: #fef3f2;
 
   /* 표 — 머리칸·합계행·선택행 */
-  --th: #eef2f7;
-  --total: #e4eaf3;
-  --selected: #d6e4fd;
-  --selected-bar: #1d4ed8;
+  --th: #f3f6fc;
+  --total: #e6ecf7;
+  --selected: #dde7fa;
+  --selected-bar: #2849a8;
+  --selected-foreground: #0e1830;
+  --row-hover: #f6f8fc;
+  --line-strong: #c9d3e6; /* 합계행 윗선·머리칸 ⠿ 아이콘 */
 
   /* 상태색 — 글자/배경 쌍, 모두 4.5:1 이상. 색만으로 구분하지 않도록 글자 표시(부족·품절)와 함께 쓴다 */
-  --neg: #b91c1c;
-  --neg-bg: #fee2e2;
-  --zero: #92400e;
-  --zero-bg: #fef3c7;
-  --ok: #166534;
-  --ok-bg: #dcfce7;
-  --consign: #1d4ed8; /* 위탁 */
-  --consign-bg: #dbeafe;
-  --delivery: #6d28d9; /* 탁송 */
-  --delivery-bg: #ede9fe;
+  --neg: #b42318;
+  --neg-bg: #fee4e2;
+  --zero: #8f4a07;
+  --zero-bg: #fdf0d5;
+  --ok: #1b7340;
+  --ok-bg: #dff3e6;
+  --consign: #2849a8; /* 위탁 */
+  --consign-bg: #e3eaf8;
+  --delivery: #6a3fb0; /* 탁송 */
+  --delivery-bg: #efe9f9;
 
   /* 거래 종류 강조 — 입고 파랑, 출고 남색, 반품 주황 */
-  --tx-receipt: #1d4ed8;
-  --tx-receipt-bg: #dbeafe;
-  --tx-ship: #3730a3;
-  --tx-ship-bg: #e0e7ff;
-  --tx-return: #b45309;
-  --tx-return-bg: #fef3c7;
+  --tx-receipt: #2849a8;
+  --tx-receipt-bg: #e3eaf8;
+  --tx-ship: #1f3a7a;
+  --tx-ship-bg: #e1e6f1;
+  --tx-return: #a24d0b;
+  --tx-return-bg: #fcecdb;
 }
 
 .dark {
