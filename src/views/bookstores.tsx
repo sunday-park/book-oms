@@ -69,7 +69,7 @@ export default function BookstoresPage() {
       >
         <Field label="지역">
           <Select value={region} onValueChange={setRegion}>
-            <SelectTrigger className="w-44" aria-label="지역 필터">
+            <SelectTrigger className="w-56" aria-label="지역 필터">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

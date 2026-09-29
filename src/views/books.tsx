@@ -80,7 +80,7 @@ export default function BooksPage() {
         }}
         onSearch={books.reload}
       >
-        <Field label="출판사 선택 *" className="[&_[role=combobox]]:w-72">
+        <Field label="출판사 선택 *">
           <EntityCombobox label="출판사" allLabel="전체 출판사" options={pubOptions(pubs.data)} value={pubId ?? null} onChange={setPubId} />
         </Field>
         <Field label="도서명" className="flex-1">
