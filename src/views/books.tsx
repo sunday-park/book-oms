@@ -127,10 +127,10 @@ export default function BooksPage() {
               </TableRow>
               {g.map((b) => (
                 <SelectableRow key={b.id} selected={b.id === selId} onSelect={() => setSelId(b.id)}>
-                  <TableCell className="text-center text-lg font-bold text-emphasis">{b.seq}</TableCell>
+                  <TableCell className="text-center">{b.seq}</TableCell>
                   <TableCell><Code>{b.code}</Code></TableCell>
-                  <TableCell className="truncate text-lg font-bold">{b.name}</TableCell>
-                  <TableCell className="text-right text-lg">{won(b.list_price)}원</TableCell>
+                  <TableCell className="truncate font-bold">{b.name}</TableCell>
+                  <TableCell className="text-right">{won(b.list_price)}원</TableCell>
                 </SelectableRow>
               ))}
             </TableBody>
