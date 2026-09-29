@@ -1,26 +1,20 @@
 'use client'
 
-import type { ReactNode } from 'react'
-import { usePathname } from 'next/navigation'
-import { findNav } from '@/components/nav'
-import { TONE_TILE } from '@/components/status'
-import { cn } from '@/lib/utils'
+import { useEffect, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
+import { TOPBAR_ACTIONS_ID } from '@/components/top-bar'
 
+/**
+ * 화면 제목은 상단바가 보여주므로 본문에는 스크린리더용 h1 만 둔다.
+ * 머리 버튼(children)은 상단바 오른쪽 자리로 옮겨 그린다.
+ */
 export function PageHeader({ title, children }: { title: string; children?: ReactNode }) {
-  const item = findNav(usePathname())?.item
-  const Icon = item?.icon
+  const [slot, setSlot] = useState<HTMLElement | null>(null)
+  useEffect(() => setSlot(document.getElementById(TOPBAR_ACTIONS_ID)), [])
   return (
-    <div className="flex items-center gap-4 print:hidden">
-      {Icon && item && (
-        <div className={cn('flex size-[50px] shrink-0 items-center justify-center rounded-xl', item.tone ? TONE_TILE[item.tone] : 'bg-tile text-tile-foreground')}>
-          <Icon className="size-6" strokeWidth={1.8} />
-        </div>
-      )}
-      <div>
-        <h1 className="text-[26px] leading-tight font-bold">{title}</h1>
-        {item && <p className="mt-1 text-base text-muted-foreground">{item.desc}</p>}
-      </div>
-      {children && <div className="ml-auto flex gap-2">{children}</div>}
-    </div>
+    <>
+      <h1 className="sr-only">{title}</h1>
+      {children && slot && createPortal(children, slot)}
+    </>
   )
 }
