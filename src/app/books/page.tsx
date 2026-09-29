@@ -114,8 +114,8 @@ export default function BooksPage() {
                 <TableCell colSpan={4} className="sticky top-0 z-10 h-[50px]! border-r-0! bg-[#f4f6fa]">
                   <div className="flex items-center gap-2.5">
                     <span className="font-semibold text-slate-800">{g[0].publisher_name}</span>
-                    <span className="rounded-md border bg-white px-2 py-0.5 font-mono text-xs text-slate-500">{g[0].publisher_code}</span>
-                    <span className="ml-auto text-[15px] text-slate-500">{g.length}종</span>
+                    <span className="rounded-md border bg-white px-2 py-0.5 font-mono text-xs text-muted-foreground">{g[0].publisher_code}</span>
+                    <span className="ml-auto text-[15px] text-muted-foreground">{g.length}종</span>
                   </div>
                 </TableCell>
               </TableRow>
@@ -123,7 +123,7 @@ export default function BooksPage() {
                 <ColHead className="top-[50px]!">순번</ColHead>
                 <ColHead className="top-[50px]!">도서코드</ColHead>
                 <ColHead className="top-[50px]!">도서명</ColHead>
-                <ColHead className="top-[50px]!">정가</ColHead>
+                <ColHead className="top-[50px]! text-right">정가</ColHead>
               </TableRow>
               {g.map((b) => (
                 <SelectableRow key={b.id} selected={b.id === selId} onSelect={() => setSelId(b.id)}>
@@ -155,7 +155,7 @@ export default function BooksPage() {
             <Field label="출판사 *">
               <EntityCombobox label="출판사" options={pubOptions(pubs.data)} value={form.publisher_id} onChange={(v) => patch({ publisher_id: v })} disabled={!!form.id} />
             </Field>
-            <p className="text-xs text-muted-foreground">도서코드는 저장 시 출판사별 순번으로 자동 부여됩니다.</p>
+            <p className="text-sm text-muted-foreground">도서코드는 저장 시 출판사별 순번으로 자동 부여됩니다.</p>
             <Field label="도서명 *">
               <Input value={form.name} onChange={(e) => patch({ name: e.target.value })} />
             </Field>

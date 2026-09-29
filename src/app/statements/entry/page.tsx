@@ -8,8 +8,8 @@ import { ListCard } from '@/components/list-card'
 import { PageHeader } from '@/components/page-header'
 import { Notice } from '@/components/print-sheet'
 import { Field, SearchBar } from '@/components/search-bar'
+import { KindBadge, PrintedBadge } from '@/components/status'
 import { Code, ColHead } from '@/components/table-helpers'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -174,12 +174,11 @@ export default function ShipmentEntryPage() {
           footer={
             <div className="space-y-3">
               {rows.some((r) => r.printed) && (
-                <p className="text-xs text-muted-foreground">인쇄된 행은 수정·삭제할 수 없습니다. 추가분은 [+ 행 추가]로 입력하세요.</p>
+                <p className="text-sm text-muted-foreground">인쇄된 행은 수정·삭제할 수 없습니다. 추가분은 [+ 행 추가]로 입력하세요.</p>
               )}
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
-                  className="h-10 px-4 text-[15px]"
                   onClick={() => {
                     setDirty(true)
                     setRows((rs) => [...rs, newRow()])
@@ -189,9 +188,9 @@ export default function ShipmentEntryPage() {
                 </Button>
                 <div className="ml-auto flex items-center gap-2">
                   {error && <p className="text-sm text-destructive">{error}</p>}
-                  <Button variant="outline" className="h-10 px-4 text-[15px]" onClick={() => guard(load)}>취소</Button>
-                  <Button variant="outline" className="h-10 px-4 text-[15px] text-destructive" onClick={remove}>삭제</Button>
-                  <Button className="h-10 px-5 text-[15px] font-semibold" onClick={save}>저장</Button>
+                  <Button variant="outline" onClick={() => guard(load)}>취소</Button>
+                  <Button variant="danger" onClick={remove}>삭제</Button>
+                  <Button onClick={save}>저장</Button>
                 </div>
               </div>
             </div>
@@ -203,29 +202,29 @@ export default function ShipmentEntryPage() {
                 <ColHead className="w-10">No</ColHead>
                 <ColHead>도서코드</ColHead>
                 <ColHead>도서명</ColHead>
-                <ColHead>정가</ColHead>
-                <ColHead className="w-24">출고율(%)</ColHead>
-                <ColHead>단가</ColHead>
-                <ColHead>금액</ColHead>
+                <ColHead className="text-right">정가</ColHead>
+                <ColHead className="w-24 text-right">출고율(%)</ColHead>
+                <ColHead className="text-right">단가</ColHead>
+                <ColHead className="text-right">금액</ColHead>
                 <ColHead className="w-28">구분</ColHead>
-                <ColHead className="w-24">부수</ColHead>
+                <ColHead className="w-24 text-right">부수</ColHead>
                 <TableHead className="w-14" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {rows.map((r, i) => (
                 <TableRow key={r.key}>
-                  <TableCell>{i + 1}</TableCell>
+                  <TableCell className="text-center">{i + 1}</TableCell>
                   <TableCell>
                     <Code>{r.book_id ? bookMap.get(r.book_id)?.code : ''}</Code>
-                    {r.printed && <Badge variant="secondary" className="ml-2">인쇄됨</Badge>}
+                    {r.printed && <PrintedBadge />}
                   </TableCell>
                   <TableCell>
                     <EntityCombobox label={`${i + 1}행 도서`} placeholder="도서 선택" options={bookOptions(books.data)} value={r.book_id} onChange={(v) => update(r.key, { book_id: v })} disabled={r.printed} />
                   </TableCell>
                   <TableCell className="text-right">{won(calc[i].listPrice)}원</TableCell>
                   <TableCell>
-                    <Input aria-label={`${i + 1}행 출고율`} type="number" min={0} max={100} step="0.1" value={r.rate} onChange={(e) => update(r.key, { rate: Number(e.target.value) })} disabled={r.printed} />
+                    <Input aria-label={`${i + 1}행 출고율`} type="number" min={0} max={100} step="0.1" className="text-right" value={r.rate} onChange={(e) => update(r.key, { rate: Number(e.target.value) })} disabled={r.printed} />
                   </TableCell>
                   <TableCell className="text-right">{won(calc[i].unit)}원</TableCell>
                   <TableCell className="text-right">{won(calc[i].amount)}원</TableCell>
@@ -236,13 +235,13 @@ export default function ShipmentEntryPage() {
                       </SelectTrigger>
                       <SelectContent>
                         {SHIP_KINDS.map((k) => (
-                          <SelectItem key={k} value={k}>{k}</SelectItem>
+                          <SelectItem key={k} value={k}><KindBadge kind={k} /></SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </TableCell>
                   <TableCell>
-                    <Input aria-label={`${i + 1}행 부수`} type="number" min={0} value={r.qty} onChange={(e) => update(r.key, { qty: Number(e.target.value) })} disabled={r.printed} />
+                    <Input aria-label={`${i + 1}행 부수`} type="number" min={0} className="text-right" value={r.qty} onChange={(e) => update(r.key, { qty: Number(e.target.value) })} disabled={r.printed} />
                   </TableCell>
                   <TableCell>
                     <Button
@@ -255,7 +254,7 @@ export default function ShipmentEntryPage() {
                         setRows((rs) => (rs.length > 1 ? rs.filter((x) => x.key !== r.key) : [newRow()]))
                       }}
                     >
-                      <Trash2 className="size-4" />
+                      <Trash2 />
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -266,7 +265,7 @@ export default function ShipmentEntryPage() {
                 <TableCell colSpan={6}>합계</TableCell>
                 <TableCell className="text-right">{won(totalAmount)}원</TableCell>
                 <TableCell />
-                <TableCell>총 {won(totalQty)}부</TableCell>
+                <TableCell className="text-right">총 {won(totalQty)}부</TableCell>
                 <TableCell />
               </TableRow>
             </TableFooter>

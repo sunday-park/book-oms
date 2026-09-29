@@ -27,11 +27,11 @@ export function EntityCombobox({ label, options, value, onChange, placeholder = 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" role="combobox" aria-label={label} disabled={disabled} className="w-56 justify-between font-normal">
-          <span className={cn('truncate', !selected && !(allLabel && value === null) && 'text-muted-foreground')}>
+        <Button variant="outline" role="combobox" aria-label={label} disabled={disabled} className="w-56 justify-between px-3.5 text-[17px] font-normal disabled:bg-muted disabled:text-slate-600 disabled:opacity-100 disabled:saturate-100">
+          <span className={cn('truncate', !selected && !(allLabel && value === null) && 'text-placeholder')}>
             {selected ? selected.label : allLabel && value === null ? allLabel : placeholder}
           </span>
-          <ChevronDown className="size-4 opacity-60" />
+          <ChevronDown className="size-4 text-muted-foreground" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-0" align="start">

@@ -12,8 +12,10 @@ import {
   TrendingDown,
   Undo2,
 } from 'lucide-react'
+import type { Tone } from '@/components/status'
 
-export type NavItem = { href: string; label: string; icon: LucideIcon; desc: string; help: string[] }
+/** tone: 입고·출고·반품 화면의 머리 아이콘 강조색 */
+export type NavItem = { href: string; label: string; icon: LucideIcon; desc: string; help: string[]; tone?: Tone }
 
 // 관리 메뉴는 [도서·서점·출판사] / [입고·반품] 두 묶음 사이에 희미한 구분선
 export const NAV: { title: string; groups: NavItem[][] }[] = [
@@ -48,6 +50,7 @@ export const NAV: { title: string; groups: NavItem[][] }[] = [
           href: '/receipts',
           label: '입고 관리',
           icon: Package,
+          tone: 'receipt',
           desc: '출판사에서 들어온 도서 입고 내역을 관리합니다.',
           help: ['기간·출판사·도서로 입고 내역을 조회합니다.', '[+ 등록]으로 입고를 추가하면 재고에 더해집니다.', '행을 선택한 뒤 [삭제]로 잘못 입력한 입고를 지웁니다.'],
         },
@@ -55,6 +58,7 @@ export const NAV: { title: string; groups: NavItem[][] }[] = [
           href: '/returns',
           label: '반품 관리',
           icon: Undo2,
+          tone: 'return',
           desc: '서점에서 돌아온 반품 내역을 관리합니다.',
           help: ['기간·출판사·서점으로 반품 내역을 조회합니다.', '[+ 등록]으로 반품을 추가하면 재고에 더해집니다.', '행을 선택한 뒤 [삭제]로 잘못 입력한 반품을 지웁니다.'],
         },
@@ -68,6 +72,7 @@ export const NAV: { title: string; groups: NavItem[][] }[] = [
         href: '/status/shipments',
         label: '출고 현황',
         icon: TrendingDown,
+        tone: 'ship',
         desc: '날짜별 서점 출고 내역을 조회합니다.',
         help: ['날짜를 고르면 그날의 출고 내역이 표시됩니다.', '출판사·서점으로 범위를 좁힐 수 있습니다.'],
       },
@@ -76,7 +81,7 @@ export const NAV: { title: string; groups: NavItem[][] }[] = [
         label: '재고 현황',
         icon: Boxes,
         desc: '출판사별 도서의 입고·출고·반품·현재고를 조회합니다.',
-        help: ['출판사를 선택하면 소속 도서의 재고가 표시됩니다.', '현재고가 음수이면 빨간색으로 표시됩니다.'],
+        help: ['출판사를 선택하면 소속 도서의 재고가 표시됩니다.', '현재고가 음수이면 빨간색 [부족], 0이면 주황색 [품절]로 표시됩니다.'],
       },
     ]],
   },
@@ -87,6 +92,7 @@ export const NAV: { title: string; groups: NavItem[][] }[] = [
         href: '/statements/entry',
         label: '출고 입력',
         icon: FileText,
+        tone: 'ship',
         desc: '서점별 출고 명세를 입력하고 저장합니다.',
         help: ['날짜·출판사·서점을 고르면 기존 명세를 불러옵니다.', '[+ 행 추가]로 도서를 추가하고 [저장]으로 확정합니다.', '인쇄된 행은 잠겨 수정·삭제할 수 없습니다.'],
       },
@@ -94,6 +100,7 @@ export const NAV: { title: string; groups: NavItem[][] }[] = [
         href: '/statements/print',
         label: '명세서 출력',
         icon: Printer,
+        tone: 'ship',
         desc: '아직 인쇄하지 않은 거래명세서를 출력합니다.',
         help: ['날짜·출판사·서점을 고르면 미인쇄 도서만 표시됩니다.', '[출력] 후 확인하면 다음 출력에서 제외됩니다.'],
       },
@@ -108,6 +115,7 @@ export const NAV: { title: string; groups: NavItem[][] }[] = [
         href: '/statements/dispatch',
         label: '출고증',
         icon: Copy,
+        tone: 'ship',
         desc: '날짜·출판사별 서점 출고증을 출력합니다.',
         help: ['날짜와 출판사를 고르면 서점별 출고증이 표시됩니다.', '[출력]으로 출고증을 인쇄합니다.'],
       },

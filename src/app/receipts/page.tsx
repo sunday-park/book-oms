@@ -7,6 +7,7 @@ import { FormDialog } from '@/components/form-dialog'
 import { ListCard } from '@/components/list-card'
 import { PageHeader } from '@/components/page-header'
 import { Field, SearchBar } from '@/components/search-bar'
+import { TONE_TEXT } from '@/components/status'
 import { AddButton, Code, ColHead, DeleteButton, EmptyRow, SelectableRow } from '@/components/table-helpers'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableFooter, TableHeader, TableRow } from '@/components/ui/table'
@@ -100,7 +101,7 @@ export default function ReceiptsPage() {
               <ColHead>출판사</ColHead>
               <ColHead>도서코드</ColHead>
               <ColHead>도서명</ColHead>
-              <ColHead>입고부수</ColHead>
+              <ColHead className="text-right">입고부수</ColHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -110,7 +111,7 @@ export default function ReceiptsPage() {
                 <TableCell>{r.publisher_name}</TableCell>
                 <TableCell><Code>{r.book_code}</Code></TableCell>
                 <TableCell className="font-semibold">{r.book_name}</TableCell>
-                <TableCell className="text-right">{won(r.qty)}</TableCell>
+                <TableCell className={`text-right font-semibold ${TONE_TEXT.receipt}`}>{won(r.qty)}</TableCell>
               </SelectableRow>
             ))}
             <EmptyRow show={list.data.length === 0} cols={5} />

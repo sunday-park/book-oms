@@ -3,14 +3,16 @@
 import type { ReactNode } from 'react'
 import { usePathname } from 'next/navigation'
 import { findNav } from '@/components/nav'
+import { TONE_TILE } from '@/components/status'
+import { cn } from '@/lib/utils'
 
 export function PageHeader({ title, children }: { title: string; children?: ReactNode }) {
   const item = findNav(usePathname())?.item
   const Icon = item?.icon
   return (
     <div className="flex items-center gap-4 print:hidden">
-      {Icon && (
-        <div className="flex size-[50px] shrink-0 items-center justify-center rounded-xl bg-[#dfe5ee] text-slate-700">
+      {Icon && item && (
+        <div className={cn('flex size-[50px] shrink-0 items-center justify-center rounded-xl', item.tone ? TONE_TILE[item.tone] : 'bg-[#dfe5ee] text-slate-700')}>
           <Icon className="size-6" strokeWidth={1.8} />
         </div>
       )}

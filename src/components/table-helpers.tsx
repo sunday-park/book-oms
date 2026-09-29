@@ -31,7 +31,8 @@ export function SelectableRow({ selected, onSelect, className, ...props }: Compo
         }
       }}
       className={cn(
-        'cursor-pointer outline-none hover:bg-slate-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring data-[state=selected]:bg-[#e6edfb] data-[state=selected]:hover:bg-[#e6edfb]',
+        // 선택 막대·포커스 테두리는 globals.css 의 .selectable-row 참고
+        'selectable-row cursor-pointer outline-none hover:bg-slate-50 data-[state=selected]:bg-selected data-[state=selected]:font-semibold data-[state=selected]:text-slate-950 data-[state=selected]:hover:bg-selected',
         className,
       )}
       {...props}
@@ -41,7 +42,7 @@ export function SelectableRow({ selected, onSelect, className, ...props }: Compo
 
 export function AddButton({ onClick }: { onClick: () => void }) {
   return (
-    <Button className="h-10 gap-1.5 px-4 text-[15px] font-semibold" onClick={onClick}>
+    <Button onClick={onClick}>
       <Plus />
       등록
     </Button>
@@ -50,7 +51,7 @@ export function AddButton({ onClick }: { onClick: () => void }) {
 
 export function EditButton({ disabled, onClick }: { disabled: boolean; onClick: () => void }) {
   return (
-    <Button variant="secondary" className="h-10 gap-1.5 border-[#c9d3e3] px-4 text-[15px] text-slate-700" disabled={disabled} onClick={onClick}>
+    <Button variant="secondary" disabled={disabled} onClick={onClick}>
       <Pencil />
       수정
     </Button>
@@ -59,7 +60,7 @@ export function EditButton({ disabled, onClick }: { disabled: boolean; onClick: 
 
 export function DeleteButton({ disabled, onClick }: { disabled: boolean; onClick: () => void }) {
   return (
-    <Button variant="outline" className="h-10 gap-1.5 border-red-200 bg-white px-4 text-[15px] text-red-600 hover:bg-red-50 hover:text-red-700" disabled={disabled} onClick={onClick}>
+    <Button variant="danger" disabled={disabled} onClick={onClick}>
       <Trash2 />
       삭제
     </Button>
@@ -67,7 +68,7 @@ export function DeleteButton({ disabled, onClick }: { disabled: boolean; onClick
 }
 
 export function Code({ children }: { children: ReactNode }) {
-  return <span className="font-mono text-sm text-slate-500">{children}</span>
+  return <span className="font-mono text-sm text-muted-foreground">{children}</span>
 }
 
 export function EmptyRow({ show, cols }: { show: boolean; cols: number }) {

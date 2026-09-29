@@ -6,6 +6,7 @@ import { EntityCombobox } from '@/components/entity-combobox'
 import { PageHeader } from '@/components/page-header'
 import { Notice, PrintSheet } from '@/components/print-sheet'
 import { Field, SearchBar } from '@/components/search-bar'
+import { StockQty } from '@/components/status'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { none, useQuery } from '@/hooks/use-query'
@@ -29,7 +30,7 @@ export default function LedgerPage() {
   return (
     <>
       <PageHeader title="재고 원장">
-        <Button className="h-10 gap-1.5 px-4 text-[15px] font-semibold" onClick={() => window.print()} disabled={stock.data.length === 0}>
+        <Button onClick={() => window.print()} disabled={stock.data.length === 0}>
           <Printer />
           출력
         </Button>
@@ -70,14 +71,14 @@ export default function LedgerPage() {
                   <TableCell className="text-right">{won(r.received)}</TableCell>
                   <TableCell className="text-right">{won(r.shipped)}</TableCell>
                   <TableCell className="text-right">{won(r.returned)}</TableCell>
-                  <TableCell className="text-right font-semibold">{won(r.stock)}</TableCell>
+                  <TableCell className="text-right"><StockQty value={r.stock} /></TableCell>
                 </TableRow>
               ))}
             </TableBody>
             <TableFooter>
               <TableRow>
                 <TableCell colSpan={5}>총 재고부수</TableCell>
-                <TableCell className="text-right">{won(total)}</TableCell>
+                <TableCell className="text-right text-base">{won(total)}</TableCell>
               </TableRow>
             </TableFooter>
           </Table>

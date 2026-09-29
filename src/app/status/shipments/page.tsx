@@ -5,6 +5,7 @@ import { EntityCombobox } from '@/components/entity-combobox'
 import { ListCard } from '@/components/list-card'
 import { PageHeader } from '@/components/page-header'
 import { Field, SearchBar } from '@/components/search-bar'
+import { KindBadge, TONE_TEXT } from '@/components/status'
 import { Code, ColHead, EmptyRow } from '@/components/table-helpers'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableFooter, TableHeader, TableRow } from '@/components/ui/table'
@@ -53,7 +54,7 @@ export default function ShipmentStatusPage() {
               <ColHead>출판사</ColHead>
               <ColHead>서점</ColHead>
               <ColHead>구분</ColHead>
-              <ColHead>출고부수</ColHead>
+              <ColHead className="text-right">출고부수</ColHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -64,8 +65,8 @@ export default function ShipmentStatusPage() {
                 <TableCell className="font-mono text-sm">{r.date}</TableCell>
                 <TableCell>{r.publisher_name}</TableCell>
                 <TableCell>{r.bookstore_name}</TableCell>
-                <TableCell>{r.kind}</TableCell>
-                <TableCell className="text-right">{won(r.qty)}</TableCell>
+                <TableCell><KindBadge kind={r.kind} /></TableCell>
+                <TableCell className={`text-right font-semibold ${TONE_TEXT.ship}`}>{won(r.qty)}</TableCell>
               </TableRow>
             ))}
             <EmptyRow show={list.data.length === 0} cols={7} />

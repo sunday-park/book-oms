@@ -6,6 +6,7 @@ import { ListCard } from '@/components/list-card'
 import { PageHeader } from '@/components/page-header'
 import { Field, SearchBar } from '@/components/search-bar'
 import { SearchInput } from '@/components/search-input'
+import { StockQty } from '@/components/status'
 import { Code, ColHead, EmptyRow } from '@/components/table-helpers'
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table'
 import { none, useQuery } from '@/hooks/use-query'
@@ -15,7 +16,6 @@ import { won } from '@/lib/format'
 import { pubOptions } from '@/lib/options'
 import type { Publisher } from '@/lib/repo/master'
 import type { StockRow } from '@/lib/repo/reports'
-import { cn } from '@/lib/utils'
 
 export default function StockStatusPage() {
   const pubs = useQuery(listPublishers, [], [] as Publisher[])
@@ -54,10 +54,10 @@ export default function StockStatusPage() {
             <TableRow>
               <ColHead>도서코드</ColHead>
               <ColHead>도서명</ColHead>
-              <ColHead>입고</ColHead>
-              <ColHead>출고</ColHead>
-              <ColHead>반품</ColHead>
-              <ColHead>현재고</ColHead>
+              <ColHead className="text-right">입고</ColHead>
+              <ColHead className="text-right">출고</ColHead>
+              <ColHead className="text-right">반품</ColHead>
+              <ColHead className="text-right">현재고</ColHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -68,7 +68,7 @@ export default function StockStatusPage() {
                 <TableCell className="text-right">{won(r.received)}</TableCell>
                 <TableCell className="text-right">{won(r.shipped)}</TableCell>
                 <TableCell className="text-right">{won(r.returned)}</TableCell>
-                <TableCell className={cn('text-right font-semibold', r.stock < 0 && 'text-destructive')}>{won(r.stock)}</TableCell>
+                <TableCell className="text-right"><StockQty value={r.stock} /></TableCell>
               </TableRow>
             ))}
             <EmptyRow show={rows.length === 0} cols={6} />

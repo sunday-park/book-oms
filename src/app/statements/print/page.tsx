@@ -7,6 +7,7 @@ import { EntityCombobox } from '@/components/entity-combobox'
 import { PageHeader } from '@/components/page-header'
 import { Notice, PrintSheet } from '@/components/print-sheet'
 import { Field, SearchBar } from '@/components/search-bar'
+import { KindBadge } from '@/components/status'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -45,7 +46,7 @@ export default function StatementPrintPage() {
   return (
     <>
       <PageHeader title="명세서 출력">
-        <Button className="h-10 gap-1.5 px-4 text-[15px] font-semibold" onClick={print} disabled={items.data.length === 0}>
+        <Button onClick={print} disabled={items.data.length === 0}>
           <Printer />
           출력
         </Button>
@@ -112,7 +113,7 @@ export default function StatementPrintPage() {
                   <TableCell className="text-right">{won(it.unit_price)}</TableCell>
                   <TableCell className="text-right">{won(it.qty)}</TableCell>
                   <TableCell className="text-right">{won(it.amount)}</TableCell>
-                  <TableCell>{it.kind}</TableCell>
+                  <TableCell><KindBadge kind={it.kind} /></TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -120,7 +121,7 @@ export default function StatementPrintPage() {
               <TableRow>
                 <TableCell colSpan={6}>합계</TableCell>
                 <TableCell className="text-right">{won(totalQty)}</TableCell>
-                <TableCell className="text-right">{won(totalAmount)}</TableCell>
+                <TableCell className="text-right text-base">{won(totalAmount)}원</TableCell>
                 <TableCell />
               </TableRow>
             </TableFooter>

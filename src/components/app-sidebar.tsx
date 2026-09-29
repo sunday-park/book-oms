@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { NAV } from '@/components/nav'
+import { buttonVariants } from '@/components/ui/button'
 import { today } from '@/lib/format'
 import { hasUnsaved } from '@/lib/unsaved'
 import { cn } from '@/lib/utils'
@@ -55,7 +56,7 @@ export function AppSidebar() {
                 {si > 0 && <div className="w-full border-t border-sidebar-border" />}
               </div>
             ) : (
-              <div className="mb-2 px-3.5 text-[13px] font-medium text-slate-500">{m.title}</div>
+              <div className="mb-2 px-3.5 text-[13px] font-semibold tracking-wide text-sidebar-muted">{m.title}</div>
             )}
             {m.groups.map((items, gi) => (
               <div key={gi} className="space-y-1">
@@ -76,6 +77,7 @@ export function AppSidebar() {
                       className={cn(
                         'flex h-[clamp(34px,4.4vh,50px)] items-center gap-3 rounded-lg text-lg font-semibold whitespace-nowrap transition-colors',
                         collapsed ? 'justify-center px-0' : 'px-3.5',
+                        'outline-none focus-visible:ring-3 focus-visible:ring-sky-300',
                         active ? 'bg-sidebar-primary text-white' : 'hover:bg-sidebar-accent hover:text-white',
                       )}
                     >
@@ -90,14 +92,14 @@ export function AppSidebar() {
         ))}
       </nav>
       <div className={cn('flex items-center border-t border-sidebar-border py-2', collapsed ? 'justify-center px-0' : 'justify-between pr-2 pl-5')}>
-        {!collapsed && <span className="font-mono text-xs text-slate-500">v1.0.0</span>}
+        {!collapsed && <span className="font-mono text-xs text-sidebar-muted">v1.0.0</span>}
         <button
           type="button"
           onClick={toggle}
           aria-label={collapsed ? '메뉴 펼치기' : '메뉴 접기'}
           title={collapsed ? '메뉴 펼치기' : '메뉴 접기'}
           aria-expanded={!collapsed}
-          className="flex size-9 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-sidebar-accent hover:text-white"
+          className={cn(buttonVariants({ variant: 'ghost', size: 'icon' }), 'text-sidebar-muted aria-expanded:bg-transparent aria-expanded:text-sidebar-muted enabled:hover:bg-sidebar-accent enabled:hover:text-white focus-visible:ring-sky-300')}
         >
           {collapsed ? <PanelLeftOpen className="size-5" /> : <PanelLeftClose className="size-5" />}
         </button>

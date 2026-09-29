@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { PageHeader } from '@/components/page-header'
 import { Notice, PrintSheet } from '@/components/print-sheet'
 import { Field, SearchBar } from '@/components/search-bar'
+import { KindBadge } from '@/components/status'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -30,7 +31,7 @@ export default function DispatchPage() {
   return (
     <>
       <PageHeader title="출고증">
-        <Button className="h-10 gap-1.5 px-4 text-[15px] font-semibold" onClick={() => window.print()} disabled={groups.data.length === 0}>
+        <Button onClick={() => window.print()} disabled={groups.data.length === 0}>
           <Printer />
           출력
         </Button>
@@ -91,7 +92,7 @@ export default function DispatchPage() {
                     <TableRow key={it.id}>
                       <TableCell>{it.book_code}</TableCell>
                       <TableCell>{it.book_name}</TableCell>
-                      <TableCell>{it.kind}</TableCell>
+                      <TableCell><KindBadge kind={it.kind} /></TableCell>
                       <TableCell className="text-right">{won(it.qty)}</TableCell>
                     </TableRow>
                   ))}
@@ -105,7 +106,7 @@ export default function DispatchPage() {
               </Table>
             </div>
           ))}
-          <p className="text-right font-semibold">총 출고부수 {won(grand)}부</p>
+          <p className="border-t-2 border-slate-800 pt-3 text-right text-xl font-bold tabular-nums">총 출고부수 {won(grand)}부</p>
         </PrintSheet>
       )}
     </>
