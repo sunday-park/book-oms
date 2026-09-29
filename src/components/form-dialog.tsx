@@ -16,12 +16,12 @@ export function FormDialog({ open, title, error, onClose, onSave, onDelete, chil
 }) {
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-md" aria-describedby={undefined}>
+      <DialogContent className="gap-5 p-6 sm:max-w-md" aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-3">{children}</div>
-        <DialogFooter className="items-center gap-2">
+        <div className="grid gap-4">{children}</div>
+        <DialogFooter className="-mx-6 -mb-6 items-center gap-2 px-6 py-4">
           <div className="mr-auto flex items-center gap-2">
             {onDelete && (
               <Button variant="outline" className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700" onClick={onDelete}>

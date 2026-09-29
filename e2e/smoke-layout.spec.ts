@@ -30,6 +30,20 @@ test('레이아웃(사이드바) 스모크: 콘솔/페이지 에러 없이 메�
     await expect(sidebar.getByRole('link', { name: label, exact: true })).toBeVisible()
   }
 
+  // 접기: 아이콘만 남고 메뉴 링크는 이름(aria-label)으로 계속 찾을 수 있다
+  await sidebar.getByRole('button', { name: '메뉴 접기' }).click()
+  await expect(sidebar.getByText('도서 재고관리')).toBeHidden()
+  await expect(sidebar.getByText('관리', { exact: true })).toBeHidden()
+  await expect.poll(async () => (await sidebar.boundingBox())!.width).toBeLessThan(100)
+  for (const label of MENU_LABELS) {
+    await expect(sidebar.getByRole('link', { name: label, exact: true })).toBeVisible()
+  }
+  // 새로고침해도 접힌 상태 유지
+  await page.reload()
+  await expect(sidebar.getByRole('button', { name: '메뉴 펼치기' })).toBeVisible()
+  await sidebar.getByRole('button', { name: '메뉴 펼치기' }).click()
+  await expect(sidebar.getByText('도서 재고관리')).toBeVisible()
+
   expect(pageErrors).toEqual([])
   expect(consoleErrors).toEqual([])
 
